@@ -1,0 +1,357 @@
+{% extends "base.html" %}
+
+{% block title %}
+Resumo do formulário
+{% endblock %}
+
+{% block page_title %}
+Resumo do formulário
+{% endblock %}
+
+{% block page_subtitle %}
+{{ caso.numero_interno }} — {{ formulario_caso.titulo }}
+{% endblock %}
+
+{% block content %}
+
+<div class="d-flex flex-wrap justify-content-between align-items-center gap-3 mb-4">
+
+    <div>
+
+        <div class="d-flex flex-wrap align-items-center gap-2 mb-2">
+
+            <span class="badge {{ formulario_caso.status_classe }}">
+                {{ formulario_caso.status_formatado }}
+            </span>
+
+            <span class="badge bg-light text-dark border">
+                Versão {{ formulario_caso.versao_modelo }}
+            </span>
+
+        </div>
+
+        <h3 class="fw-bold mb-1">
+            {{ formulario_caso.titulo }}
+        </h3>
+
+        <p class="text-muted mb-0">
+            {{ caso.cliente.nome }}
+        </p>
+
+    </div>
+
+    <div class="d-flex flex-wrap gap-2">
+
+        <a
+            href="{{ url_for(
+                'formularios_caso.listar',
+                caso_id=caso.id
+            ) }}"
+            class="btn btn-outline-secondary"
+        >
+            Voltar
+        </a>
+
+        {% if formulario_caso.status == "RASCUNHO" %}
+
+            <a
+                href="{{ url_for(
+                    'formularios_caso.preencher',
+                    caso_id=caso.id,
+                    formulario_caso_id=formulario_caso.id
+                ) }}"
+                class="btn btn-primary"
+            >
+                Continuar preenchimento
+            </a>
+
+        {% elif formulario_caso.status == "CONCLUIDO" %}
+
+            <form
+                method="POST"
+                action="{{ url_for(
+                    'formularios_caso.reabrir',
+                    caso_id=caso.id,
+                    formulario_caso_id=formulario_caso.id
+                ) }}"
+                class="d-inline"
+                onsubmit="
+                    return confirm(
+                        'Deseja reabrir este formulário para edição?'
+                    );
+                "
+            >
+                <button
+                    type="submit"
+                    class="btn btn-warning"
+                >
+                    Reabrir formulário
+                </button>
+            </form>
+
+        {% endif %}
+
+    </div>
+
+</div>
+
+<div class="row g-4">
+
+    <div class="col-xl-8">
+
+        <div class="card border-0 shadow-sm">
+
+            <div class="card-header bg-white border-0 px-4 pt-4 pb-0">
+
+                <h5 class="fw-semibold mb-1">
+                    Respostas
+                </h5>
+
+                <p class="text-muted mb-0">
+                    Informações registradas neste formulário.
+                </p>
+
+            </div>
+
+            <div class="card-body p-4">
+
+                {% if perguntas %}
+
+                    {% for pergunta in perguntas %}
+
+                        {% set resposta = respostas_por_pergunta.get(pergunta.id) %}
+
+                        <div
+                            class="
+                                {% if not loop.last %}
+                                    border-bottom pb-4 mb-4
+                                {% endif %}
+                            "
+                        >
+
+                            <div class="d-flex flex-wrap justify-content-between gap-2 mb-2">
+
+                                <h6 class="fw-semibold mb-0">
+                                    {{ pergunta.texto }}
+                                </h6>
+
+                                {% if pergunta.obrigatoria %}
+                                    <span class="badge bg-danger">
+                                        Obrigatória
+                                    </span>
+                                {% endif %}
+
+                            </div>
+
+                            {% if resposta and resposta.valor_formatado %}
+
+                                <div
+                                    class="p-3 bg-light border rounded-3"
+                                    style="white-space: pre-line;"
+                                >{{ resposta.valor_formatado }}</div>
+
+                            {% else %}
+
+                                <div class="text-muted fst-italic">
+                                    Não respondida
+                                </div>
+
+                            {% endif %}
+
+                            <small class="text-muted d-block mt-2">
+                                Código:
+                                <code>{{ pergunta.codigo }}</code>
+                            </small>
+
+                        </div>
+
+                    {% endfor %}
+
+                {% else %}
+
+                    <p class="text-muted mb-0">
+                        Nenhuma pergunta foi encontrada.
+                    </p>
+
+                {% endif %}
+
+            </div>
+
+        </div>
+
+    </div>
+
+    <div class="col-xl-4">
+
+        <div class="card border-0 shadow-sm mb-4">
+
+            <div class="card-body p-4">
+
+                <h5 class="fw-semibold mb-4">
+                    Informações do preenchimento
+                </h5>
+
+                <div class="mb-3">
+
+                    <small class="text-muted d-block">
+                        Responsável
+                    </small>
+
+                    <strong>
+                        {{ formulario_caso.usuario.nome if formulario_caso.usuario else 'Não definido' }}
+                    </strong>
+
+                </div>
+
+                <div class="mb-3">
+
+                    <small class="text-muted d-block">
+                        Iniciado em
+                    </small>
+
+                    <strong>
+                        {{ formulario_caso.iniciado_em.strftime('%d/%m/%Y às %H:%M') }}
+                    </strong>
+
+                </div>
+
+                {% if formulario_caso.concluido_em %}
+
+                    <div class="mb-3">
+
+                        <small class="text-muted d-block">
+                            Concluído em
+                        </small>
+
+                        <strong>
+                            {{ formulario_caso.concluido_em.strftime('%d/%m/%Y às %H:%M') }}
+                        </strong>
+
+                    </div>
+
+                {% endif %}
+
+                <div>
+
+                    <small class="text-muted d-block">
+                        Respostas registradas
+                    </small>
+
+                    <strong>
+                        {{ formulario_caso.quantidade_respostas }}
+                    </strong>
+
+                </div>
+
+            </div>
+
+        </div>
+
+        {% if formulario_caso.observacoes %}
+
+            <div class="card border-0 shadow-sm mb-4">
+
+                <div class="card-body p-4">
+
+                    <h5 class="fw-semibold mb-3">
+                        Observações
+                    </h5>
+
+                    <p
+                        class="mb-0"
+                        style="white-space: pre-line;"
+                    >{{ formulario_caso.observacoes }}</p>
+
+                </div>
+
+            </div>
+
+        {% endif %}
+
+        {% if formulario_caso.status != "CANCELADO" %}
+
+            <div class="card border-danger shadow-sm">
+
+                <div class="card-body p-4">
+
+                    <h6 class="fw-semibold text-danger">
+                        Cancelar formulário
+                    </h6>
+
+                    <p class="text-muted small">
+                        O formulário permanecerá no histórico, mas não
+                        poderá mais ser editado.
+                    </p>
+
+                    <form
+                        method="POST"
+                        action="{{ url_for(
+                            'formularios_caso.cancelar',
+                            caso_id=caso.id,
+                            formulario_caso_id=formulario_caso.id
+                        ) }}"
+                        onsubmit="
+                            return confirm(
+                                'Tem certeza que deseja cancelar este formulário?'
+                            );
+                        "
+                    >
+                        <button
+                            type="submit"
+                            class="btn btn-outline-danger w-100"
+                        >
+                            Cancelar formulário
+                        </button>
+                    </form>
+
+                </div>
+
+            </div>
+
+        {% elif formulario_caso.status == "CANCELADO" %}
+
+            <div class="card border-danger shadow-sm">
+
+                <div class="card-body p-4">
+
+                    <h6 class="fw-semibold text-danger">
+                        Excluir formulário cancelado
+                    </h6>
+
+                    <p class="text-muted small">
+                        Esta ação removerá definitivamente o preenchimento
+                        e todas as respostas.
+                    </p>
+
+                    <form
+                        method="POST"
+                        action="{{ url_for(
+                            'formularios_caso.excluir',
+                            caso_id=caso.id,
+                            formulario_caso_id=formulario_caso.id
+                        ) }}"
+                        onsubmit="
+                            return confirm(
+                                'Excluir definitivamente este formulário e todas as respostas?'
+                            );
+                        "
+                    >
+                        <button
+                            type="submit"
+                            class="btn btn-danger w-100"
+                        >
+                            Excluir definitivamente
+                        </button>
+                    </form>
+
+                </div>
+
+            </div>
+
+        {% endif %}
+
+    </div>
+
+</div>
+
+{% endblock %}

@@ -1,0 +1,343 @@
+{% extends "base.html" %}
+
+{% block title %}
+Regras — {{ modelo.nome }}
+{% endblock %}
+
+{% block page_title %}
+Regras do modelo
+{% endblock %}
+
+{% block page_subtitle %}
+Visualize as condições e ações utilizadas na geração automática.
+{% endblock %}
+
+{% block content %}
+
+<div
+    class="
+        d-flex
+        flex-column
+        flex-lg-row
+        justify-content-between
+        align-items-lg-center
+        gap-3
+        mb-4
+    "
+>
+    <div>
+        <div class="d-flex align-items-center gap-2 mb-1">
+            <h2 class="mb-0">
+                ⚙️ Regras do modelo
+            </h2>
+
+            {% if modelo.ativo %}
+                <span class="badge text-bg-success">
+                    Modelo ativo
+                </span>
+            {% else %}
+                <span class="badge text-bg-secondary">
+                    Modelo inativo
+                </span>
+            {% endif %}
+        </div>
+
+        <p class="text-muted mb-0">
+            {{ modelo.nome }}
+            · versão {{ modelo.versao }}
+        </p>
+    </div>
+
+    <div class="d-flex flex-wrap gap-2">
+        <a
+            href="{{ url_for('modelos.listar') }}"
+            class="btn btn-outline-secondary"
+        >
+            ← Voltar aos modelos
+        </a>
+
+        <a
+            href="{{ url_for(
+                'regras_modelo.nova',
+                modelo_id=modelo.id
+            ) }}"
+            class="btn btn-primary"
+        >
+            + Nova regra
+        </a>
+    </div>
+</div>
+
+<div class="row g-3 mb-4">
+    <div class="col-md-4">
+        <div class="card border-0 shadow-sm h-100">
+            <div class="card-body">
+                <div class="text-muted small mb-1">
+                    Total de regras
+                </div>
+
+                <div class="fs-3 fw-bold">
+                    {{ total_regras }}
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-md-4">
+        <div class="card border-0 shadow-sm h-100">
+            <div class="card-body">
+                <div class="text-muted small mb-1">
+                    Regras ativas
+                </div>
+
+                <div class="fs-3 fw-bold text-success">
+                    {{ total_ativas }}
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-md-4">
+        <div class="card border-0 shadow-sm h-100">
+            <div class="card-body">
+                <div class="text-muted small mb-1">
+                    Regras inativas
+                </div>
+
+                <div class="fs-3 fw-bold text-secondary">
+                    {{ total_inativas }}
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+{% if regras %}
+
+    <div class="d-grid gap-3">
+
+        {% for regra in regras %}
+
+            <div class="card border-0 shadow-sm">
+                <div class="card-body p-4">
+
+                    <div
+                        class="
+                            d-flex
+                            flex-column
+                            flex-lg-row
+                            justify-content-between
+                            align-items-lg-start
+                            gap-3
+                            mb-4
+                        "
+                    >
+                        <div>
+                            <div class="d-flex flex-wrap align-items-center gap-2 mb-1">
+                                <h5 class="mb-0">
+                                    {{ regra.nome }}
+                                </h5>
+
+                                {% if regra.ativa %}
+                                    <span class="badge text-bg-success">
+                                        Ativa
+                                    </span>
+                                {% else %}
+                                    <span class="badge text-bg-secondary">
+                                        Inativa
+                                    </span>
+                                {% endif %}
+
+                                <span class="badge text-bg-light border">
+                                    Prioridade {{ regra.prioridade }}
+                                </span>
+                            </div>
+
+                            {% if regra.descricao %}
+                                <p class="text-muted mb-0">
+                                    {{ regra.descricao }}
+                                </p>
+                            {% endif %}
+                        </div>
+
+                        <div class="d-flex gap-2">
+                            <button
+                                type="button"
+                                class="btn btn-sm btn-outline-secondary"
+                                disabled
+                                title="Disponível na próxima etapa."
+                            >
+                                Duplicar
+                            </button>
+
+                            <button
+                                type="button"
+                                class="btn btn-sm btn-outline-primary"
+                                disabled
+                                title="Disponível na próxima etapa."
+                            >
+                                Editar
+                            </button>
+                        </div>
+                    </div>
+
+                    <div class="row g-3">
+
+                        <div class="col-lg-5">
+                            <div
+                                class="
+                                    border
+                                    rounded-3
+                                    bg-light
+                                    p-3
+                                    h-100
+                                "
+                            >
+                                <div
+                                    class="
+                                        small
+                                        fw-bold
+                                        text-uppercase
+                                        text-muted
+                                        mb-2
+                                    "
+                                >
+                                    Se
+                                </div>
+
+                                <div class="fw-semibold">
+                                    {{ regra.condicao.campo_rotulo }}
+                                </div>
+
+                                <div class="text-muted small mt-1">
+                                    {{ regra.condicao.campo }}
+                                </div>
+
+                                <div class="mt-3">
+                                    <span class="badge text-bg-primary">
+                                        {{ regra.condicao.operador_rotulo }}
+                                    </span>
+
+                                    {% if regra.condicao.possui_valor %}
+                                        <span class="ms-2 fw-semibold">
+                                            {{ regra.condicao.valor }}
+                                        </span>
+                                    {% endif %}
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="col-lg-7">
+                            <div
+                                class="
+                                    border
+                                    rounded-3
+                                    p-3
+                                    h-100
+                                "
+                            >
+                                <div
+                                    class="
+                                        small
+                                        fw-bold
+                                        text-uppercase
+                                        text-muted
+                                        mb-2
+                                    "
+                                >
+                                    Então
+                                </div>
+
+                                {% if regra.acoes %}
+                                    <div class="d-grid gap-2">
+
+                                        {% for acao in regra.acoes %}
+                                            <div
+                                                class="
+                                                    d-flex
+                                                    align-items-start
+                                                    gap-2
+                                                "
+                                            >
+                                                <span class="text-success">
+                                                    ✓
+                                                </span>
+
+                                                <div>
+                                                    <span class="fw-semibold">
+                                                        {{ acao.tipo_rotulo }}
+                                                    </span>
+
+                                                    {% if acao.campo %}
+                                                        <span class="text-muted">
+                                                            · {{ acao.campo_rotulo }}
+                                                        </span>
+                                                    {% endif %}
+
+                                                    {% if acao.possui_valor %}
+                                                        <div class="small text-muted">
+                                                            Valor: {{ acao.valor }}
+                                                        </div>
+                                                    {% endif %}
+
+                                                    {% if acao.possui_conteudo %}
+                                                        <div class="small text-muted">
+                                                            Cláusula:
+                                                            {{ acao.conteudo | truncate(160) }}
+                                                        </div>
+                                                    {% endif %}
+                                                </div>
+                                            </div>
+                                        {% endfor %}
+
+                                    </div>
+                                {% else %}
+                                    <span class="text-muted">
+                                        Nenhuma ação configurada.
+                                    </span>
+                                {% endif %}
+                            </div>
+                        </div>
+
+                    </div>
+
+                </div>
+            </div>
+
+        {% endfor %}
+
+    </div>
+
+{% else %}
+
+    <div class="card border-0 shadow-sm">
+        <div class="card-body text-center py-5 px-3">
+
+            <div class="display-5 mb-3">
+                ⚙️
+            </div>
+
+            <h5>
+                Nenhuma regra configurada
+            </h5>
+
+            <p class="text-muted mb-4">
+                Este modelo ainda não possui condições ou ações automáticas.
+            </p>
+
+            <a
+                href="{{ url_for(
+                    'regras_modelo.nova',
+                    modelo_id=modelo.id
+                ) }}"
+                class="btn btn-primary"
+            >
+                + Criar primeira regra
+            </a>
+
+        </div>
+    </div>
+
+{% endif %}
+
+{% endblock %}

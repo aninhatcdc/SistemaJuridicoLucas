@@ -1,0 +1,196 @@
+{% extends "base.html" %}
+
+{% block title %}Novo atendimento{% endblock %}
+{% block page_title %}Novo atendimento{% endblock %}
+{% block page_subtitle %}{{ caso.numero_interno }} — {{ caso.titulo }}{% endblock %}
+
+{% block content %}
+
+<form method="POST">
+
+    <div class="row g-4">
+
+        <div class="col-lg-8">
+
+            <div class="card border-0 shadow-sm">
+
+                <div class="card-body p-4">
+
+                    <div class="row g-3">
+
+                        <div class="col-md-6">
+                            <label for="tipo" class="form-label fw-semibold">
+                                Tipo <span class="text-danger">*</span>
+                            </label>
+                            <select id="tipo" name="tipo" class="form-select" required>
+                                <option value="">Selecione</option>
+                                {% for valor, rotulo in tipos.items() %}
+                                    <option
+                                        value="{{ valor }}"
+                                        {% if dados.get('tipo') == valor %}selected{% endif %}
+                                    >
+                                        {{ rotulo }}
+                                    </option>
+                                {% endfor %}
+                            </select>
+                        </div>
+
+                        <div class="col-md-6">
+                            <label for="status" class="form-label fw-semibold">
+                                Status <span class="text-danger">*</span>
+                            </label>
+                            <select id="status" name="status" class="form-select" required>
+                                {% for valor, rotulo in status_opcoes.items() %}
+                                    <option
+                                        value="{{ valor }}"
+                                        {% if dados.get('status', 'AGENDADO') == valor %}selected{% endif %}
+                                    >
+                                        {{ rotulo }}
+                                    </option>
+                                {% endfor %}
+                            </select>
+                        </div>
+
+                        <div class="col-12">
+                            <label for="assunto" class="form-label fw-semibold">
+                                Assunto <span class="text-danger">*</span>
+                            </label>
+                            <input
+                                type="text"
+                                id="assunto"
+                                name="assunto"
+                                class="form-control"
+                                maxlength="200"
+                                value="{{ dados.get('assunto', '') }}"
+                                placeholder="Ex.: Reunião para análise dos documentos"
+                                required
+                            >
+                        </div>
+
+                        <div class="col-md-4">
+                            <label for="data_atendimento" class="form-label fw-semibold">
+                                Data <span class="text-danger">*</span>
+                            </label>
+                            <input
+                                type="date"
+                                id="data_atendimento"
+                                name="data_atendimento"
+                                class="form-control"
+                                value="{{ dados.get('data_atendimento', '') }}"
+                                required
+                            >
+                        </div>
+
+                        <div class="col-md-4">
+                            <label for="horario" class="form-label fw-semibold">
+                                Horário
+                            </label>
+                            <input
+                                type="time"
+                                id="horario"
+                                name="horario"
+                                class="form-control"
+                                value="{{ dados.get('horario', '') }}"
+                            >
+                        </div>
+
+                        <div class="col-md-4">
+                            <label for="retorno_em" class="form-label fw-semibold">
+                                Retorno previsto
+                            </label>
+                            <input
+                                type="date"
+                                id="retorno_em"
+                                name="retorno_em"
+                                class="form-control"
+                                value="{{ dados.get('retorno_em', '') }}"
+                            >
+                        </div>
+
+                        <div class="col-12">
+                            <label for="usuario_id" class="form-label fw-semibold">
+                                Responsável
+                            </label>
+                            <select id="usuario_id" name="usuario_id" class="form-select">
+                                <option value="">Usuário atual</option>
+                                {% for usuario in responsaveis %}
+                                    <option
+                                        value="{{ usuario.id }}"
+                                        {% if dados.get('usuario_id') == usuario.id %}selected{% endif %}
+                                    >
+                                        {{ usuario.nome }}
+                                    </option>
+                                {% endfor %}
+                            </select>
+                        </div>
+
+                        <div class="col-12">
+                            <label for="descricao" class="form-label fw-semibold">
+                                Relato do atendimento
+                            </label>
+                            <textarea
+                                id="descricao"
+                                name="descricao"
+                                class="form-control"
+                                rows="7"
+                                placeholder="Registre os assuntos tratados, orientações dadas e próximos passos."
+                            >{{ dados.get('descricao', '') }}</textarea>
+                        </div>
+
+                    </div>
+
+                </div>
+
+            </div>
+
+        </div>
+
+        <div class="col-lg-4">
+
+            <div class="card border-0 shadow-sm mb-3">
+
+                <div class="card-body p-4">
+
+                    <h6 class="fw-semibold mb-3">Caso vinculado</h6>
+
+                    <div class="mb-2">
+                        <small class="text-muted d-block">Número</small>
+                        <strong>{{ caso.numero_interno }}</strong>
+                    </div>
+
+                    <div class="mb-2">
+                        <small class="text-muted d-block">Título</small>
+                        <strong>{{ caso.titulo }}</strong>
+                    </div>
+
+                    <div>
+                        <small class="text-muted d-block">Cliente</small>
+                        <strong>{{ caso.cliente.nome }}</strong>
+                    </div>
+
+                </div>
+
+            </div>
+
+            <div class="d-grid gap-2">
+
+                <button type="submit" class="btn btn-success">
+                    Salvar atendimento
+                </button>
+
+                <a
+                    href="{{ url_for('casos.detalhes', caso_id=caso.id, _anchor='atendimentos') }}"
+                    class="btn btn-outline-secondary"
+                >
+                    Cancelar
+                </a>
+
+            </div>
+
+        </div>
+
+    </div>
+
+</form>
+
+{% endblock %}

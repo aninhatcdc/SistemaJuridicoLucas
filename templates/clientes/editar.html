@@ -1,0 +1,665 @@
+{% extends "base.html" %}
+
+{% block title %}Editar Cliente{% endblock %}
+
+{% block page_title %}Editar Cliente{% endblock %}
+
+{% block page_subtitle %}
+Atualize os dados de {{ cliente.nome }}
+{% endblock %}
+
+{% block content %}
+
+<form method="POST">
+
+    <!-- ===================================================== -->
+    <!-- DADOS PESSOAIS -->
+    <!-- ===================================================== -->
+
+    <div class="card border-0 shadow-sm mb-4">
+        <div class="card-body p-4">
+
+            <div class="d-flex align-items-center justify-content-between mb-4">
+                <div>
+                    <h5 class="fw-semibold mb-1">
+                        Dados pessoais
+                    </h5>
+
+                    <p class="text-muted mb-0">
+                        Informações principais de identificação do cliente.
+                    </p>
+                </div>
+
+                <span class="badge text-bg-light">
+                    Obrigatórios: nome e CPF
+                </span>
+            </div>
+
+            <div class="row g-3">
+
+                <div class="col-md-8">
+                    <label for="nome" class="form-label">
+                        Nome completo *
+                    </label>
+
+                    <input
+                        type="text"
+                        class="form-control"
+                        id="nome"
+                        name="nome"
+                        value="{{ dados.get('nome', cliente.nome or '') }}"
+                        required
+                        autofocus
+                    >
+                </div>
+
+                <div class="col-md-4">
+                    <label for="cpf" class="form-label">
+                        CPF *
+                    </label>
+
+                    <input
+                        type="text"
+                        class="form-control"
+                        id="cpf"
+                        name="cpf"
+                        value="{{ dados.get('cpf', cliente.cpf or '') }}"
+                        maxlength="14"
+                        placeholder="000.000.000-00"
+                        required
+                    >
+                </div>
+
+                <div class="col-md-4">
+                    <label for="rg" class="form-label">
+                        RG
+                    </label>
+
+                    <input
+                        type="text"
+                        class="form-control"
+                        id="rg"
+                        name="rg"
+                        value="{{ dados.get('rg', cliente.rg or '') }}"
+                    >
+                </div>
+
+                <div class="col-md-4">
+                    <label for="orgao_expedidor" class="form-label">
+                        Órgão expedidor
+                    </label>
+
+                    <input
+                        type="text"
+                        class="form-control text-uppercase"
+                        id="orgao_expedidor"
+                        name="orgao_expedidor"
+                        value="{{ dados.get('orgao_expedidor', cliente.orgao_expedidor or '') }}"
+                        placeholder="SSP"
+                    >
+                </div>
+
+                <div class="col-md-2">
+                    <label for="uf_rg" class="form-label">
+                        UF do RG
+                    </label>
+
+                    <input
+                        type="text"
+                        class="form-control text-uppercase"
+                        id="uf_rg"
+                        name="uf_rg"
+                        value="{{ dados.get('uf_rg', cliente.uf_rg or '') }}"
+                        maxlength="2"
+                        placeholder="PB"
+                    >
+                </div>
+
+                <div class="col-md-2">
+                    <label for="sexo" class="form-label">
+                        Sexo
+                    </label>
+
+                    {% set sexo_atual = dados.get(
+                        'sexo',
+                        cliente.sexo or ''
+                    ) %}
+
+                    <select
+                        class="form-select"
+                        id="sexo"
+                        name="sexo"
+                    >
+                        <option value="">Selecione</option>
+
+                        {% for opcao in [
+                            "Feminino",
+                            "Masculino",
+                            "Outro",
+                            "Prefere não informar"
+                        ] %}
+                            <option
+                                value="{{ opcao }}"
+                                {% if sexo_atual == opcao %}
+                                    selected
+                                {% endif %}
+                            >
+                                {{ opcao }}
+                            </option>
+                        {% endfor %}
+                    </select>
+                </div>
+
+                <div class="col-md-4">
+                    <label for="data_nascimento" class="form-label">
+                        Data de nascimento
+                    </label>
+
+                    <input
+                        type="date"
+                        class="form-control"
+                        id="data_nascimento"
+                        name="data_nascimento"
+                        value="{{ dados.get(
+                            'data_nascimento',
+                            cliente.data_nascimento.strftime('%Y-%m-%d')
+                            if cliente.data_nascimento else ''
+                        ) }}"
+                    >
+                </div>
+
+                <div class="col-md-4">
+                    <label for="estado_civil" class="form-label">
+                        Estado civil
+                    </label>
+
+                    {% set estado_civil_atual = dados.get(
+                        'estado_civil',
+                        cliente.estado_civil or ''
+                    ) %}
+
+                    <select
+                        class="form-select"
+                        id="estado_civil"
+                        name="estado_civil"
+                    >
+                        <option value="">Selecione</option>
+
+                        {% for opcao in [
+                            "Solteiro(a)",
+                            "Casado(a)",
+                            "Divorciado(a)",
+                            "Viúvo(a)",
+                            "União estável",
+                            "Separado(a)"
+                        ] %}
+                            <option
+                                value="{{ opcao }}"
+                                {% if estado_civil_atual == opcao %}
+                                    selected
+                                {% endif %}
+                            >
+                                {{ opcao }}
+                            </option>
+                        {% endfor %}
+                    </select>
+                </div>
+
+                <div class="col-md-4">
+                    <label for="profissao" class="form-label">
+                        Profissão
+                    </label>
+
+                    <input
+                        type="text"
+                        class="form-control"
+                        id="profissao"
+                        name="profissao"
+                        value="{{ dados.get('profissao', cliente.profissao or '') }}"
+                    >
+                </div>
+
+            </div>
+
+        </div>
+    </div>
+
+
+    <!-- ===================================================== -->
+    <!-- NACIONALIDADE E NATURALIDADE -->
+    <!-- ===================================================== -->
+
+    <div class="card border-0 shadow-sm mb-4">
+        <div class="card-body p-4">
+
+            <div class="mb-4">
+                <h5 class="fw-semibold mb-1">
+                    Nacionalidade e naturalidade
+                </h5>
+
+                <p class="text-muted mb-0">
+                    Informações utilizadas em contratos, procurações,
+                    declarações e petições.
+                </p>
+            </div>
+
+            <div class="row g-3">
+
+                <div class="col-md-5">
+                    <label for="nacionalidade" class="form-label">
+                        Nacionalidade
+                    </label>
+
+                    <input
+                        type="text"
+                        class="form-control"
+                        id="nacionalidade"
+                        name="nacionalidade"
+                        value="{{ dados.get(
+                            'nacionalidade',
+                            cliente.nacionalidade or 'Brasileira'
+                        ) }}"
+                        placeholder="Brasileira"
+                    >
+                </div>
+
+                <div class="col-md-5">
+                    <label for="naturalidade" class="form-label">
+                        Naturalidade
+                    </label>
+
+                    <input
+                        type="text"
+                        class="form-control"
+                        id="naturalidade"
+                        name="naturalidade"
+                        value="{{ dados.get('naturalidade', cliente.naturalidade or '') }}"
+                        placeholder="Cidade de nascimento"
+                    >
+                </div>
+
+                <div class="col-md-2">
+                    <label for="uf_naturalidade" class="form-label">
+                        UF
+                    </label>
+
+                    <input
+                        type="text"
+                        class="form-control text-uppercase"
+                        id="uf_naturalidade"
+                        name="uf_naturalidade"
+                        value="{{ dados.get(
+                            'uf_naturalidade',
+                            cliente.uf_naturalidade or ''
+                        ) }}"
+                        maxlength="2"
+                        placeholder="PB"
+                    >
+                </div>
+
+            </div>
+
+        </div>
+    </div>
+
+
+    <!-- ===================================================== -->
+    <!-- FILIAÇÃO -->
+    <!-- ===================================================== -->
+
+    <div class="card border-0 shadow-sm mb-4">
+        <div class="card-body p-4">
+
+            <div class="mb-4">
+                <h5 class="fw-semibold mb-1">
+                    Filiação
+                </h5>
+
+                <p class="text-muted mb-0">
+                    Dados dos pais do cliente.
+                </p>
+            </div>
+
+            <div class="row g-3">
+
+                <div class="col-md-6">
+                    <label for="nome_mae" class="form-label">
+                        Nome da mãe
+                    </label>
+
+                    <input
+                        type="text"
+                        class="form-control"
+                        id="nome_mae"
+                        name="nome_mae"
+                        value="{{ dados.get('nome_mae', cliente.nome_mae or '') }}"
+                    >
+                </div>
+
+                <div class="col-md-6">
+                    <label for="nome_pai" class="form-label">
+                        Nome do pai
+                    </label>
+
+                    <input
+                        type="text"
+                        class="form-control"
+                        id="nome_pai"
+                        name="nome_pai"
+                        value="{{ dados.get('nome_pai', cliente.nome_pai or '') }}"
+                    >
+                </div>
+
+            </div>
+
+        </div>
+    </div>
+
+
+    <!-- ===================================================== -->
+    <!-- CONTATO -->
+    <!-- ===================================================== -->
+
+    <div class="card border-0 shadow-sm mb-4">
+        <div class="card-body p-4">
+
+            <div class="mb-4">
+                <h5 class="fw-semibold mb-1">
+                    Contato
+                </h5>
+
+                <p class="text-muted mb-0">
+                    Telefones e endereço eletrônico.
+                </p>
+            </div>
+
+            <div class="row g-3">
+
+                <div class="col-md-4">
+                    <label for="telefone" class="form-label">
+                        Telefone
+                    </label>
+
+                    <input
+                        type="text"
+                        class="form-control"
+                        id="telefone"
+                        name="telefone"
+                        value="{{ dados.get('telefone', cliente.telefone or '') }}"
+                        placeholder="(00) 0000-0000"
+                    >
+                </div>
+
+                <div class="col-md-4">
+                    <label for="whatsapp" class="form-label">
+                        WhatsApp
+                    </label>
+
+                    <input
+                        type="text"
+                        class="form-control"
+                        id="whatsapp"
+                        name="whatsapp"
+                        value="{{ dados.get('whatsapp', cliente.whatsapp or '') }}"
+                        placeholder="(00) 00000-0000"
+                    >
+                </div>
+
+                <div class="col-md-4">
+                    <label for="email" class="form-label">
+                        E-mail
+                    </label>
+
+                    <input
+                        type="email"
+                        class="form-control"
+                        id="email"
+                        name="email"
+                        value="{{ dados.get('email', cliente.email or '') }}"
+                        placeholder="cliente@email.com"
+                    >
+                </div>
+
+            </div>
+
+        </div>
+    </div>
+
+
+    <!-- ===================================================== -->
+    <!-- ENDEREÇO -->
+    <!-- ===================================================== -->
+
+    <div class="card border-0 shadow-sm mb-4">
+        <div class="card-body p-4">
+
+            <div class="mb-4">
+                <h5 class="fw-semibold mb-1">
+                    Endereço
+                </h5>
+
+                <p class="text-muted mb-0">
+                    Localização residencial ou comercial do cliente.
+                </p>
+            </div>
+
+            <div class="row g-3">
+
+                <div class="col-md-3">
+                    <label for="cep" class="form-label">
+                        CEP
+                    </label>
+
+                    <input
+                        type="text"
+                        class="form-control"
+                        id="cep"
+                        name="cep"
+                        value="{{ dados.get('cep', cliente.cep or '') }}"
+                        maxlength="9"
+                        placeholder="00000-000"
+                    >
+                </div>
+
+                <div class="col-md-7">
+                    <label for="logradouro" class="form-label">
+                        Logradouro
+                    </label>
+
+                    <input
+                        type="text"
+                        class="form-control"
+                        id="logradouro"
+                        name="logradouro"
+                        value="{{ dados.get('logradouro', cliente.logradouro or '') }}"
+                        placeholder="Rua, avenida, travessa..."
+                    >
+                </div>
+
+                <div class="col-md-2">
+                    <label for="numero" class="form-label">
+                        Número
+                    </label>
+
+                    <input
+                        type="text"
+                        class="form-control"
+                        id="numero"
+                        name="numero"
+                        value="{{ dados.get('numero', cliente.numero or '') }}"
+                    >
+                </div>
+
+                <div class="col-md-5">
+                    <label for="complemento" class="form-label">
+                        Complemento
+                    </label>
+
+                    <input
+                        type="text"
+                        class="form-control"
+                        id="complemento"
+                        name="complemento"
+                        value="{{ dados.get('complemento', cliente.complemento or '') }}"
+                        placeholder="Apartamento, bloco, casa..."
+                    >
+                </div>
+
+                <div class="col-md-4">
+                    <label for="bairro" class="form-label">
+                        Bairro
+                    </label>
+
+                    <input
+                        type="text"
+                        class="form-control"
+                        id="bairro"
+                        name="bairro"
+                        value="{{ dados.get('bairro', cliente.bairro or '') }}"
+                    >
+                </div>
+
+                <div class="col-md-2">
+                    <label for="cidade" class="form-label">
+                        Cidade
+                    </label>
+
+                    <input
+                        type="text"
+                        class="form-control"
+                        id="cidade"
+                        name="cidade"
+                        value="{{ dados.get('cidade', cliente.cidade or '') }}"
+                    >
+                </div>
+
+                <div class="col-md-1">
+                    <label for="estado" class="form-label">
+                        UF
+                    </label>
+
+                    <input
+                        type="text"
+                        class="form-control text-uppercase"
+                        id="estado"
+                        name="estado"
+                        value="{{ dados.get('estado', cliente.estado or '') }}"
+                        maxlength="2"
+                    >
+                </div>
+
+            </div>
+
+        </div>
+    </div>
+
+
+    <!-- ===================================================== -->
+    <!-- INFORMAÇÕES DO CADASTRO -->
+    <!-- ===================================================== -->
+
+    <div class="card border-0 shadow-sm mb-4">
+        <div class="card-body p-4">
+
+            <div class="mb-4">
+                <h5 class="fw-semibold mb-1">
+                    Informações do cadastro
+                </h5>
+
+                <p class="text-muted mb-0">
+                    Origem do cliente e informações adicionais.
+                </p>
+            </div>
+
+            <div class="row g-3">
+
+                <div class="col-md-4">
+                    <label for="origem" class="form-label">
+                        Origem do cliente
+                    </label>
+
+                    {% set origem_atual = dados.get(
+                        'origem',
+                        cliente.origem or ''
+                    ) %}
+
+                    <select
+                        class="form-select"
+                        id="origem"
+                        name="origem"
+                    >
+                        <option value="">Selecione</option>
+
+                        {% for opcao in [
+                            "Indicação",
+                            "Instagram",
+                            "Facebook",
+                            "Google",
+                            "WhatsApp",
+                            "Site",
+                            "Cliente antigo",
+                            "Outro"
+                        ] %}
+                            <option
+                                value="{{ opcao }}"
+                                {% if origem_atual == opcao %}
+                                    selected
+                                {% endif %}
+                            >
+                                {{ opcao }}
+                            </option>
+                        {% endfor %}
+                    </select>
+                </div>
+
+                <div class="col-md-8">
+                    <label for="observacoes" class="form-label">
+                        Observações
+                    </label>
+
+                    <textarea
+                        class="form-control"
+                        id="observacoes"
+                        name="observacoes"
+                        rows="5"
+                        placeholder="Digite observações relevantes sobre o cliente..."
+                    >{{ dados.get(
+                        'observacoes',
+                        cliente.observacoes or ''
+                    ) }}</textarea>
+                </div>
+
+            </div>
+
+        </div>
+    </div>
+
+
+    <!-- ===================================================== -->
+    <!-- AÇÕES -->
+    <!-- ===================================================== -->
+
+    <div class="d-flex justify-content-between align-items-center mb-4">
+
+        <a
+            href="{{ url_for(
+                'clientes.detalhes',
+                cliente_id=cliente.id
+            ) }}"
+            class="btn btn-outline-secondary"
+        >
+            Cancelar
+        </a>
+
+        <button
+            type="submit"
+            class="btn btn-primary px-4"
+        >
+            Salvar Alterações
+        </button>
+
+    </div>
+
+</form>
+
+{% endblock %}

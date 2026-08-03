@@ -1,0 +1,406 @@
+<div class="card border-0 shadow-sm">
+    <div class="card-body p-4">
+        <div class="row g-4">
+
+            <!-- DADOS PRINCIPAIS -->
+            <div class="col-12">
+                <div class="d-flex align-items-center gap-2 mb-1">
+                    <span class="fs-5">📌</span>
+                    <h5 class="mb-0">Dados do compromisso</h5>
+                </div>
+
+                <p class="text-muted small mb-0">
+                    Informe o título, o tipo e a data do compromisso.
+                </p>
+            </div>
+
+            <div class="col-12">
+                <label for="titulo" class="form-label fw-semibold">
+                    Título
+                    <span class="text-danger">*</span>
+                </label>
+
+                <input
+                    type="text"
+                    class="form-control"
+                    id="titulo"
+                    name="titulo"
+                    maxlength="200"
+                    required
+                    autofocus
+                    value="{{ evento.titulo or '' }}"
+                    placeholder="Ex.: Audiência de conciliação"
+                >
+            </div>
+
+            <div class="col-md-4">
+                <label for="tipo" class="form-label fw-semibold">
+                    Tipo
+                    <span class="text-danger">*</span>
+                </label>
+
+                <select
+                    class="form-select"
+                    id="tipo"
+                    name="tipo"
+                    required
+                >
+                    {% for valor, rotulo in tipos.items() %}
+                        <option
+                            value="{{ valor }}"
+                            {% if evento.tipo == valor %}selected{% endif %}
+                        >
+                            {{ rotulo }}
+                        </option>
+                    {% endfor %}
+                </select>
+            </div>
+
+            <div class="col-md-4">
+                <label for="status" class="form-label fw-semibold">
+                    Status
+                    <span class="text-danger">*</span>
+                </label>
+
+                <select
+                    class="form-select"
+                    id="status"
+                    name="status"
+                    required
+                >
+                    {% for valor, rotulo in status_eventos.items() %}
+                        <option
+                            value="{{ valor }}"
+                            {% if evento.status == valor %}selected{% endif %}
+                        >
+                            {{ rotulo }}
+                        </option>
+                    {% endfor %}
+                </select>
+            </div>
+
+            <div class="col-md-4">
+                <label for="prioridade" class="form-label fw-semibold">
+                    Prioridade
+                    <span class="text-danger">*</span>
+                </label>
+
+                <select
+                    class="form-select"
+                    id="prioridade"
+                    name="prioridade"
+                    required
+                >
+                    {% for valor, rotulo in prioridades.items() %}
+                        <option
+                            value="{{ valor }}"
+                            {% if evento.prioridade == valor %}selected{% endif %}
+                        >
+                            {{ rotulo }}
+                        </option>
+                    {% endfor %}
+                </select>
+            </div>
+
+            <div class="col-md-4">
+                <label for="data" class="form-label fw-semibold">
+                    Data
+                    <span class="text-danger">*</span>
+                </label>
+
+                <input
+                    type="date"
+                    class="form-control"
+                    id="data"
+                    name="data"
+                    required
+                    value="{% if evento.data %}{{ evento.data.strftime('%Y-%m-%d') }}{% endif %}"
+                >
+            </div>
+
+            <div class="col-md-4">
+                <label for="hora_inicio" class="form-label fw-semibold">
+                    Horário inicial
+                </label>
+
+                <input
+                    type="time"
+                    class="form-control"
+                    id="hora_inicio"
+                    name="hora_inicio"
+                    value="{% if evento.hora_inicio %}{{ evento.hora_inicio.strftime('%H:%M') }}{% endif %}"
+                >
+            </div>
+
+            <div class="col-md-4">
+                <label for="hora_fim" class="form-label fw-semibold">
+                    Horário final
+                </label>
+
+                <input
+                    type="time"
+                    class="form-control"
+                    id="hora_fim"
+                    name="hora_fim"
+                    value="{% if evento.hora_fim %}{{ evento.hora_fim.strftime('%H:%M') }}{% endif %}"
+                >
+            </div>
+
+            <div class="col-12">
+                <hr class="my-1">
+            </div>
+
+            <!-- VÍNCULOS -->
+            <div class="col-12">
+                <div class="d-flex align-items-center gap-2 mb-1">
+                    <span class="fs-5">⚖️</span>
+                    <h5 class="mb-0">Vínculos jurídicos</h5>
+                </div>
+
+                <p class="text-muted small mb-0">
+                    O vínculo com caso e processo é opcional.
+                </p>
+            </div>
+
+            <div class="col-md-6">
+                <label for="caso_id" class="form-label fw-semibold">
+                    Caso
+                </label>
+
+                <select
+                    class="form-select"
+                    id="caso_id"
+                    name="caso_id"
+                >
+                    <option value="">Nenhum caso selecionado</option>
+
+                    {% for caso in casos %}
+                        <option
+                            value="{{ caso.id }}"
+                            {% if evento.caso_id == caso.id %}selected{% endif %}
+                        >
+                            {{ caso.numero_interno }} — {{ caso.titulo }}
+                            {% if caso.cliente %}
+                                — {{ caso.cliente.nome }}
+                            {% endif %}
+                        </option>
+                    {% endfor %}
+                </select>
+
+                <div class="form-text">
+                    Ao selecionar um processo, o caso será identificado automaticamente.
+                </div>
+            </div>
+
+            <div class="col-md-6">
+                <label for="processo_id" class="form-label fw-semibold">
+                    Processo
+                </label>
+
+                <select
+                    class="form-select"
+                    id="processo_id"
+                    name="processo_id"
+                >
+                    <option value="">Nenhum processo selecionado</option>
+
+                    {% for processo in processos %}
+                        <option
+                            value="{{ processo.id }}"
+                            data-caso-id="{{ processo.caso_id }}"
+                            {% if evento.processo_id == processo.id %}selected{% endif %}
+                        >
+                            {{ processo.numero_cnj or "Processo sem número CNJ" }}
+
+                            {% if processo.caso %}
+                                — {{ processo.caso.numero_interno }}
+                            {% endif %}
+                        </option>
+                    {% endfor %}
+                </select>
+            </div>
+
+            <div class="col-md-6">
+                <label for="responsavel_id" class="form-label fw-semibold">
+                    Responsável
+                </label>
+
+                <select
+                    class="form-select"
+                    id="responsavel_id"
+                    name="responsavel_id"
+                >
+                    <option value="">Nenhum responsável selecionado</option>
+
+                    {% for usuario in usuarios %}
+                        <option
+                            value="{{ usuario.id }}"
+                            {% if evento.responsavel_id == usuario.id %}selected{% endif %}
+                        >
+                            {{ usuario.nome }}
+
+                            {% if usuario.is_admin %}
+                                — Administrador
+                            {% elif usuario.is_advogado %}
+                                — Advogado(a)
+                            {% else %}
+                                — Assistente
+                            {% endif %}
+                        </option>
+                    {% endfor %}
+                </select>
+            </div>
+
+            <div class="col-md-6">
+                <label for="local" class="form-label fw-semibold">
+                    Local
+                </label>
+
+                <input
+                    type="text"
+                    class="form-control"
+                    id="local"
+                    name="local"
+                    maxlength="200"
+                    value="{{ evento.local or '' }}"
+                    placeholder="Ex.: Fórum, escritório ou videoconferência"
+                >
+            </div>
+
+            <div class="col-12">
+                <hr class="my-1">
+            </div>
+
+            <!-- DESCRIÇÃO -->
+            <div class="col-12">
+                <div class="d-flex align-items-center gap-2 mb-1">
+                    <span class="fs-5">📝</span>
+                    <h5 class="mb-0">Descrição e observações</h5>
+                </div>
+            </div>
+
+            <div class="col-12">
+                <label for="descricao" class="form-label fw-semibold">
+                    Descrição
+                </label>
+
+                <textarea
+                    class="form-control"
+                    id="descricao"
+                    name="descricao"
+                    rows="5"
+                    placeholder="Inclua informações importantes sobre o compromisso..."
+                >{{ evento.descricao or '' }}</textarea>
+            </div>
+
+            <input
+                type="hidden"
+                name="retorno"
+                value="{{ retorno or '' }}"
+            >
+
+            <!-- BOTÕES -->
+            <div class="col-12">
+                <div class="d-flex flex-column flex-sm-row justify-content-end gap-2 pt-2">
+                    {% if retorno == "caso" and evento.caso_id %}
+                        <a
+                            href="{{ url_for('casos.detalhes', caso_id=evento.caso_id) }}#agenda"
+                            class="btn btn-outline-secondary"
+                        >
+                            Cancelar
+                        </a>
+                    {% elif retorno == "calendario" %}
+                        <a
+                            href="{{ url_for('agenda.calendario') }}"
+                            class="btn btn-outline-secondary"
+                        >
+                            Cancelar
+                        </a>
+                    {% else %}
+                        <a
+                            href="{{ url_for('agenda.listar_eventos') }}"
+                            class="btn btn-outline-secondary"
+                        >
+                            Cancelar
+                        </a>
+                    {% endif %}
+
+                    <button
+                        type="submit"
+                        class="btn btn-primary px-4"
+                    >
+                        💾 {{ texto_botao }}
+                    </button>
+                </div>
+            </div>
+
+        </div>
+    </div>
+</div>
+
+<script>
+document.addEventListener("DOMContentLoaded", function () {
+    const casoSelect = document.getElementById("caso_id");
+    const processoSelect = document.getElementById("processo_id");
+    const horaInicio = document.getElementById("hora_inicio");
+    const horaFim = document.getElementById("hora_fim");
+
+    if (casoSelect && processoSelect) {
+        processoSelect.addEventListener("change", function () {
+            const opcaoSelecionada =
+                processoSelect.options[processoSelect.selectedIndex];
+
+            if (!opcaoSelecionada || !processoSelect.value) {
+                return;
+            }
+
+            const casoId =
+                opcaoSelecionada.getAttribute("data-caso-id");
+
+            if (casoId) {
+                casoSelect.value = casoId;
+            }
+        });
+
+        casoSelect.addEventListener("change", function () {
+            if (!processoSelect.value) {
+                return;
+            }
+
+            const opcaoSelecionada =
+                processoSelect.options[processoSelect.selectedIndex];
+
+            const casoDoProcesso =
+                opcaoSelecionada.getAttribute("data-caso-id");
+
+            if (
+                casoSelect.value &&
+                casoDoProcesso &&
+                casoSelect.value !== casoDoProcesso
+            ) {
+                processoSelect.value = "";
+            }
+        });
+    }
+
+    if (horaInicio && horaFim) {
+        horaFim.addEventListener("change", function () {
+            if (
+                horaInicio.value &&
+                horaFim.value &&
+                horaFim.value <= horaInicio.value
+            ) {
+                horaFim.setCustomValidity(
+                    "O horário final deve ser posterior ao horário inicial."
+                );
+            } else {
+                horaFim.setCustomValidity("");
+            }
+        });
+
+        horaInicio.addEventListener("change", function () {
+            horaFim.setCustomValidity("");
+        });
+    }
+});
+</script>

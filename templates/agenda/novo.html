@@ -1,0 +1,41 @@
+{% extends "base.html" %}
+
+{% block title %}Novo compromisso{% endblock %}
+
+{% block page_title %}
+Novo compromisso
+{% endblock %}
+
+{% block page_subtitle %}
+Cadastre uma audiência, prazo, reunião, tarefa ou lembrete.
+{% endblock %}
+
+{% block content %}
+
+<div class="d-flex justify-content-between align-items-center mb-4">
+
+    <div>
+        <h2>📅 Novo compromisso</h2>
+        <p class="text-muted mb-0">
+            Cadastre uma audiência, prazo, reunião, tarefa ou lembrete.
+        </p>
+    </div>
+
+    <a
+        href="{{ url_for('agenda.listar_eventos') }}"
+        class="btn btn-outline-secondary"
+    >
+        Voltar
+    </a>
+
+</div>
+
+<form method="POST">
+
+    {% set texto_botao = "Cadastrar compromisso" %}
+
+    {% include "agenda/_form.html" %}
+
+</form>
+
+{% endblock %}

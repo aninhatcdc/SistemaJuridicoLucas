@@ -1,0 +1,322 @@
+{% extends "base.html" %}
+
+{% block title %}
+{{ formulario_caso.titulo }}
+{% endblock %}
+
+{% block page_title %}
+Preencher ficha
+{% endblock %}
+
+{% block page_subtitle %}
+{{ caso.numero_interno }} — {{ formulario_caso.titulo }}
+{% endblock %}
+
+{% block content %}
+
+<div class="d-flex flex-wrap justify-content-between align-items-center gap-3 mb-4">
+
+    <div>
+
+        <div class="d-flex flex-wrap align-items-center gap-2 mb-2">
+
+            <span class="badge {{ formulario_caso.status_classe }}">
+                {{ formulario_caso.status_formatado }}
+            </span>
+
+            <span class="badge bg-light text-dark border">
+                Versão {{ formulario_caso.versao_modelo }}
+            </span>
+
+        </div>
+
+        <h3 class="fw-bold mb-1">
+            {{ formulario_caso.titulo }}
+        </h3>
+
+        <p class="text-muted mb-0">
+            Cliente:
+            <strong>{{ caso.cliente.nome }}</strong>
+        </p>
+
+    </div>
+
+    <div class="d-flex flex-wrap gap-2">
+
+        <a
+            href="{{ url_for(
+                'formularios_caso.listar',
+                caso_id=caso.id
+            ) }}"
+            class="btn btn-outline-secondary"
+        >
+            Voltar
+        </a>
+
+        <a
+            href="{{ url_for(
+                'formularios_caso.visualizar',
+                caso_id=caso.id,
+                formulario_caso_id=formulario_caso.id
+            ) }}"
+            class="btn btn-outline-primary"
+        >
+            Visualizar resumo
+        </a>
+
+    </div>
+
+</div>
+
+<div class="card border-0 shadow-sm mb-4">
+
+    <div class="card-body p-4">
+
+        <div class="d-flex flex-wrap justify-content-between gap-3 mb-3">
+
+            <div>
+
+                <h6 class="fw-semibold mb-1">
+                    Progresso do atendimento
+                </h6>
+
+                <p class="text-muted small mb-0">
+                    {{ quantidade_respondidas }} de
+                    {{ total_perguntas }} pergunta(s) respondida(s).
+                </p>
+
+            </div>
+
+            <strong>
+                {{ percentual }}%
+            </strong>
+
+        </div>
+
+        <div
+            class="progress"
+            role="progressbar"
+            aria-valuenow="{{ percentual }}"
+            aria-valuemin="0"
+            aria-valuemax="100"
+            style="height: 10px;"
+        >
+            <div
+                class="progress-bar"
+                style="width: {{ percentual }}%;"
+            ></div>
+        </div>
+
+        {% if quantidade_obrigatorias %}
+
+            <small class="text-muted d-block mt-3">
+                A ficha possui
+                {{ quantidade_obrigatorias }}
+                pergunta(s) obrigatória(s).
+            </small>
+
+        {% endif %}
+
+    </div>
+
+</div>
+
+<form method="POST">
+
+    <div class="row g-4">
+
+        <div class="col-xl-8">
+
+            {% if perguntas_por_etapa %}
+
+                {% for nome_etapa, dados_etapa in perguntas_por_etapa.items() %}
+
+                    <section class="card border-0 shadow-sm mb-4">
+
+                        <div class="card-header bg-white border-0 px-4 pt-4 pb-3">
+
+                            <div class="d-flex align-items-start gap-3">
+
+                                <div
+                                    class="d-flex align-items-center justify-content-center bg-light border rounded-3 flex-shrink-0"
+                                    style="
+                                        width: 48px;
+                                        height: 48px;
+                                        font-size: 1.35rem;
+                                    "
+                                >
+                                    {{ dados_etapa["icone"] }}
+                                </div>
+
+                                <div class="flex-grow-1">
+
+                                    <div class="d-flex flex-wrap align-items-center gap-2 mb-1">
+
+                                        <span class="badge text-bg-dark">
+                                            Etapa {{ dados_etapa["ordem_etapa"] }}
+                                        </span>
+
+                                        <h5 class="fw-semibold mb-0">
+                                            {{ nome_etapa }}
+                                        </h5>
+
+                                    </div>
+
+                                    {% if dados_etapa["descricao"] %}
+
+                                        <p class="text-muted small mb-0">
+                                            {{ dados_etapa["descricao"] }}
+                                        </p>
+
+                                    {% else %}
+
+                                        <p class="text-muted small mb-0">
+                                            Preencha as informações desta seção.
+                                        </p>
+
+                                    {% endif %}
+
+                                </div>
+
+                                <span class="badge text-bg-primary">
+                                    {{ dados_etapa["perguntas"]|length }}
+                                    campo(s)
+                                </span>
+
+                            </div>
+
+                        </div>
+
+                        <div class="card-body px-4 pb-4 pt-2">
+
+                            {% for pergunta in dados_etapa["perguntas"] %}
+
+                                <div
+                                    class="py-4 {% if not loop.last %}border-bottom{% endif %}"
+                                >
+
+                                    <div class="d-flex align-items-start gap-3">
+
+                                        <div
+                                            class="d-flex align-items-center justify-content-center bg-light border rounded-circle flex-shrink-0"
+                                            style="
+                                                width: 36px;
+                                                height: 36px;
+                                                font-size: 0.85rem;
+                                            "
+                                        >
+                                            {{ loop.index }}
+                                        </div>
+
+                                        <div class="flex-grow-1">
+
+                                            {% include "formularios_caso/_campo_resposta.html" %}
+
+                                        </div>
+
+                                    </div>
+
+                                </div>
+
+                            {% endfor %}
+
+                        </div>
+
+                    </section>
+
+                {% endfor %}
+
+            {% elif perguntas %}
+
+                <div class="alert alert-warning">
+                    As perguntas existem, mas ainda não foram organizadas por etapa.
+                </div>
+
+            {% else %}
+
+                <div class="alert alert-warning">
+                    Esta ficha não possui perguntas ativas.
+                </div>
+
+            {% endif %}
+
+        </div>
+
+        <div class="col-xl-4">
+
+            <div
+                class="card border-0 shadow-sm sticky-xl-top"
+                style="top: 90px;"
+            >
+
+                <div class="card-body p-4">
+
+                    <h5 class="fw-semibold mb-1">
+                        Finalização
+                    </h5>
+
+                    <p class="text-muted small mb-4">
+                        Salve para continuar depois ou conclua após
+                        responder os campos obrigatórios.
+                    </p>
+
+                    <label
+                        for="observacoes"
+                        class="form-label fw-semibold"
+                    >
+                        Observações gerais
+                    </label>
+
+                    <textarea
+                        class="form-control"
+                        id="observacoes"
+                        name="observacoes"
+                        rows="5"
+                        placeholder="Registre observações gerais sobre este atendimento."
+                    >{{ formulario_caso.observacoes or '' }}</textarea>
+
+                    <hr class="my-4">
+
+                    <div class="d-grid gap-2">
+
+                        <button
+                            type="submit"
+                            name="acao"
+                            value="salvar"
+                            class="btn btn-outline-primary"
+                        >
+                            💾 Salvar rascunho
+                        </button>
+
+                        <button
+                            type="submit"
+                            name="acao"
+                            value="concluir"
+                            class="btn btn-success"
+                            onclick="
+                                return confirm(
+                                    'Deseja concluir esta ficha de atendimento?'
+                                );
+                            "
+                        >
+                            ✅ Concluir ficha
+                        </button>
+
+                    </div>
+
+                    <div class="alert alert-light border small mt-4 mb-0">
+                        Ao concluir, a ficha continuará disponível para
+                        visualização e poderá ser reaberta quando necessário.
+                    </div>
+
+                </div>
+
+            </div>
+
+        </div>
+
+    </div>
+
+</form>
+
+{% endblock %}

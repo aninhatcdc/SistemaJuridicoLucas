@@ -1,0 +1,404 @@
+{% extends "base.html" %}
+
+{% block title %}
+Modelos de documentos
+{% endblock %}
+
+{% block page_title %}
+Modelos de documentos
+{% endblock %}
+
+{% block page_subtitle %}
+Gerencie os arquivos Word utilizados para gerar documentos automaticamente.
+{% endblock %}
+
+{% block content %}
+
+<div
+    class="
+        d-flex
+        flex-column
+        flex-lg-row
+        justify-content-between
+        align-items-lg-center
+        gap-3
+        mb-4
+    "
+>
+
+    <div>
+        <h2 class="mb-1">
+            📄 Modelos de documentos
+        </h2>
+
+        <p class="text-muted mb-0">
+            Cadastre, atualize e organize os modelos utilizados pelo escritório.
+        </p>
+    </div>
+
+    <a
+        href="{{ url_for('modelos.novo') }}"
+        class="btn btn-primary"
+    >
+        + Novo modelo
+    </a>
+
+</div>
+
+<div class="card border-0 shadow-sm mb-4">
+    <div class="card-body">
+
+        <form
+            method="GET"
+            class="row g-3 align-items-end"
+        >
+
+            <div class="col-lg-7">
+                <label
+                    for="q"
+                    class="form-label fw-semibold"
+                >
+                    Pesquisar
+                </label>
+
+                <input
+                    type="text"
+                    class="form-control"
+                    id="q"
+                    name="q"
+                    value="{{ termo }}"
+                    placeholder="Nome, categoria, área jurídica ou descrição"
+                >
+            </div>
+
+            <div class="col-lg-3">
+                <label
+                    for="status"
+                    class="form-label fw-semibold"
+                >
+                    Status
+                </label>
+
+                <select
+                    class="form-select"
+                    id="status"
+                    name="status"
+                >
+                    <option value="">
+                        Todos
+                    </option>
+
+                    <option
+                        value="ativos"
+                        {% if status == "ativos" %}selected{% endif %}
+                    >
+                        Ativos
+                    </option>
+
+                    <option
+                        value="inativos"
+                        {% if status == "inativos" %}selected{% endif %}
+                    >
+                        Inativos
+                    </option>
+                </select>
+            </div>
+
+            <div class="col-lg-2">
+                <div class="d-grid">
+                    <button
+                        type="submit"
+                        class="btn btn-outline-primary"
+                    >
+                        Pesquisar
+                    </button>
+                </div>
+            </div>
+
+            {% if termo or status %}
+                <div class="col-12">
+                    <a
+                        href="{{ url_for('modelos.listar') }}"
+                        class="small text-decoration-none"
+                    >
+                        Limpar filtros
+                    </a>
+                </div>
+            {% endif %}
+
+        </form>
+
+    </div>
+</div>
+
+<div class="card border-0 shadow-sm">
+    <div class="card-body p-0">
+
+        {% if modelos %}
+
+            <div class="table-responsive">
+                <table class="table table-hover align-middle mb-0">
+
+                    <thead class="table-light">
+                        <tr>
+                            <th class="ps-4">
+                                Modelo
+                            </th>
+
+                            <th>
+                                Categoria
+                            </th>
+
+                            <th>
+                                Área jurídica
+                            </th>
+
+                            <th>
+                                Arquivo
+                            </th>
+
+                            <th>
+                                Status
+                            </th>
+
+                            <th>
+                                Atualização
+                            </th>
+
+                            <th class="text-end pe-4">
+                                Ações
+                            </th>
+                        </tr>
+                    </thead>
+
+                    <tbody>
+
+                        {% for modelo in modelos %}
+                            <tr>
+
+                                <td class="ps-4">
+                                    <div class="fw-semibold">
+                                        {{ modelo.nome }}
+                                    </div>
+
+                                    {% if modelo.descricao %}
+                                        <div
+                                            class="text-muted small"
+                                            style="max-width: 320px;"
+                                        >
+                                            {{ modelo.descricao | truncate(90) }}
+                                        </div>
+                                    {% endif %}
+                                </td>
+
+                                <td>
+                                    {% if modelo.categoria %}
+                                        {{ modelo.categoria }}
+                                    {% else %}
+                                        <span class="text-muted">
+                                            Não informada
+                                        </span>
+                                    {% endif %}
+                                </td>
+
+                                <td>
+                                    {% if modelo.area_juridica %}
+                                        <span class="badge text-bg-light border">
+                                            {{ modelo.area_juridica }}
+                                        </span>
+                                    {% else %}
+                                        <span class="text-muted">
+                                            Geral
+                                        </span>
+                                    {% endif %}
+                                </td>
+
+                                <td>
+                                    <div class="d-flex align-items-center gap-2">
+                                        <span>
+                                            📎
+                                        </span>
+
+                                        <span class="small">
+                                            {{ modelo.nome_arquivo }}
+                                        </span>
+                                    </div>
+                                </td>
+
+                                <td>
+                                    {% if modelo.ativo %}
+                                        <span class="badge text-bg-success">
+                                            Ativo
+                                        </span>
+                                    {% else %}
+                                        <span class="badge text-bg-secondary">
+                                            Inativo
+                                        </span>
+                                    {% endif %}
+                                </td>
+
+                                <td>
+                                    {% if modelo.atualizado_em %}
+                                        {{ modelo.atualizado_em.strftime('%d/%m/%Y') }}
+
+                                        <div class="text-muted small">
+                                            {{ modelo.atualizado_em.strftime('%H:%M') }}
+                                        </div>
+                                    {% else %}
+                                        —
+                                    {% endif %}
+                                </td>
+
+                                <td class="text-end pe-4">
+                                    <div
+                                        class="
+                                            d-flex
+                                            justify-content-end
+                                            flex-wrap
+                                            gap-2
+                                        "
+                                    >
+
+                                        <a
+                                            href="{{ url_for(
+                                                'modelos.download',
+                                                modelo_id=modelo.id
+                                            ) }}"
+                                            class="btn btn-sm btn-outline-primary"
+                                            title="Baixar arquivo"
+                                        >
+                                            ⬇️
+                                        </a>
+
+                                        <a
+                                            href="{{ url_for(
+                                                'regras_modelo.listar',
+                                                modelo_id=modelo.id
+                                            ) }}"
+                                            class="btn btn-sm btn-outline-dark"
+                                            title="Regras do modelo"
+                                        >
+                                            ⚙️
+                                        </a>
+
+                                        <a
+                                            href="{{ url_for(
+                                                'modelos.editar',
+                                                modelo_id=modelo.id
+                                            ) }}"
+                                            class="btn btn-sm btn-outline-secondary"
+                                            title="Editar modelo"
+                                        >
+                                            ✏️
+                                        </a>
+
+                                        <form
+                                            method="POST"
+                                            action="{{ url_for(
+                                                'modelos.alternar_status',
+                                                modelo_id=modelo.id
+                                            ) }}"
+                                        >
+                                            <button
+                                                type="submit"
+                                                class="
+                                                    btn
+                                                    btn-sm
+                                                    {% if modelo.ativo %}
+                                                        btn-outline-warning
+                                                    {% else %}
+                                                        btn-outline-success
+                                                    {% endif %}
+                                                "
+                                                title="
+                                                    {% if modelo.ativo %}
+                                                        Desativar modelo
+                                                    {% else %}
+                                                        Ativar modelo
+                                                    {% endif %}
+                                                "
+                                            >
+                                                {% if modelo.ativo %}
+                                                    ⏸️
+                                                {% else %}
+                                                    ▶️
+                                                {% endif %}
+                                            </button>
+                                        </form>
+
+                                        <form
+                                            method="POST"
+                                            action="{{ url_for(
+                                                'modelos.excluir',
+                                                modelo_id=modelo.id
+                                            ) }}"
+                                            onsubmit="
+                                                return confirm(
+                                                    'Tem certeza que deseja excluir este modelo? O arquivo também será removido.'
+                                                );
+                                            "
+                                        >
+                                            <button
+                                                type="submit"
+                                                class="btn btn-sm btn-outline-danger"
+                                                title="Excluir modelo"
+                                            >
+                                                🗑️
+                                            </button>
+                                        </form>
+
+                                    </div>
+                                </td>
+
+                            </tr>
+                        {% endfor %}
+
+                    </tbody>
+
+                </table>
+            </div>
+
+        {% else %}
+
+            <div class="text-center py-5 px-3">
+
+                <div class="display-5 mb-3">
+                    📄
+                </div>
+
+                <h5>
+                    Nenhum modelo encontrado
+                </h5>
+
+                <p class="text-muted mb-4">
+                    {% if termo or status %}
+                        Nenhum modelo corresponde aos filtros informados.
+                    {% else %}
+                        Cadastre o primeiro arquivo Word utilizado pelo escritório.
+                    {% endif %}
+                </p>
+
+                {% if termo or status %}
+                    <a
+                        href="{{ url_for('modelos.listar') }}"
+                        class="btn btn-outline-secondary"
+                    >
+                        Limpar filtros
+                    </a>
+                {% else %}
+                    <a
+                        href="{{ url_for('modelos.novo') }}"
+                        class="btn btn-primary"
+                    >
+                        + Cadastrar primeiro modelo
+                    </a>
+                {% endif %}
+
+            </div>
+
+        {% endif %}
+
+    </div>
+</div>
+
+{% endblock %}

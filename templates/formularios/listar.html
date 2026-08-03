@@ -1,0 +1,464 @@
+{% extends "base.html" %}
+
+{% block title %}
+Formulários
+{% endblock %}
+
+{% block page_title %}
+Modelos de formulários
+{% endblock %}
+
+{% block page_subtitle %}
+Gerencie entrevistas, triagens, questionários e checklists reutilizáveis.
+{% endblock %}
+
+{% block content %}
+
+<div
+    class="
+        d-flex
+        flex-column
+        flex-lg-row
+        justify-content-between
+        align-items-lg-center
+        gap-3
+        mb-4
+    "
+>
+
+    <div>
+        <h2 class="mb-1">
+            📋 Modelos de formulários
+        </h2>
+
+        <p class="text-muted mb-0">
+            Cadastre e organize os formulários utilizados pelo escritório.
+        </p>
+    </div>
+
+    <a
+        href="{{ url_for('formularios.novo') }}"
+        class="btn btn-primary"
+    >
+        + Novo formulário
+    </a>
+
+</div>
+
+<div class="card border-0 shadow-sm mb-4">
+    <div class="card-body">
+
+        <form
+            method="GET"
+            class="row g-3 align-items-end"
+        >
+
+            <div class="col-lg-4">
+                <label
+                    for="q"
+                    class="form-label fw-semibold"
+                >
+                    Pesquisar
+                </label>
+
+                <input
+                    type="text"
+                    class="form-control"
+                    id="q"
+                    name="q"
+                    value="{{ termo }}"
+                    placeholder="Nome, código ou descrição"
+                >
+            </div>
+
+            <div class="col-lg-3">
+                <label
+                    for="area_juridica_id"
+                    class="form-label fw-semibold"
+                >
+                    Área jurídica
+                </label>
+
+                <select
+                    class="form-select"
+                    id="area_juridica_id"
+                    name="area_juridica_id"
+                >
+                    <option value="">
+                        Todas
+                    </option>
+
+                    {% for area in areas_juridicas %}
+                        <option
+                            value="{{ area.id }}"
+                            {% if area_juridica_id == area.id %}
+                                selected
+                            {% endif %}
+                        >
+                            {{ area.nome }}
+                        </option>
+                    {% endfor %}
+                </select>
+            </div>
+
+            <div class="col-lg-3">
+                <label
+                    for="status"
+                    class="form-label fw-semibold"
+                >
+                    Status
+                </label>
+
+                <select
+                    class="form-select"
+                    id="status"
+                    name="status"
+                >
+                    <option value="">
+                        Todos
+                    </option>
+
+                    <option
+                        value="ativos"
+                        {% if status == "ativos" %}selected{% endif %}
+                    >
+                        Ativos
+                    </option>
+
+                    <option
+                        value="inativos"
+                        {% if status == "inativos" %}selected{% endif %}
+                    >
+                        Inativos
+                    </option>
+                </select>
+            </div>
+
+            <div class="col-lg-2">
+                <div class="d-grid">
+                    <button
+                        type="submit"
+                        class="btn btn-outline-primary"
+                    >
+                        Pesquisar
+                    </button>
+                </div>
+            </div>
+
+            {% if termo or status or area_juridica_id %}
+                <div class="col-12">
+                    <a
+                        href="{{ url_for('formularios.listar') }}"
+                        class="small text-decoration-none"
+                    >
+                        Limpar filtros
+                    </a>
+                </div>
+            {% endif %}
+
+        </form>
+
+    </div>
+</div>
+
+<div class="card border-0 shadow-sm">
+    <div class="card-body p-0">
+
+        {% if formularios %}
+
+            <div class="table-responsive">
+
+                <table class="table table-hover align-middle mb-0">
+
+                    <thead class="table-light">
+                        <tr>
+                            <th class="ps-4">
+                                Formulário
+                            </th>
+
+                            <th>
+                                Área jurídica
+                            </th>
+
+                            <th>
+                                Versão
+                            </th>
+
+                            <th>
+                                Perguntas
+                            </th>
+
+                            <th>
+                                Status
+                            </th>
+
+                            <th>
+                                Atualização
+                            </th>
+
+                            <th class="text-end pe-4">
+                                Ações
+                            </th>
+                        </tr>
+                    </thead>
+
+                    <tbody>
+
+                        {% for formulario in formularios %}
+
+                            <tr>
+
+                                <td class="ps-4">
+
+                                    <div class="fw-semibold">
+                                        {{ formulario.nome }}
+                                    </div>
+
+                                    <div class="text-muted small">
+                                        Código:
+                                        <code>{{ formulario.codigo }}</code>
+                                    </div>
+
+                                    {% if formulario.descricao %}
+                                        <div
+                                            class="text-muted small mt-1"
+                                            style="max-width: 340px;"
+                                        >
+                                            {{ formulario.descricao | truncate(90) }}
+                                        </div>
+                                    {% endif %}
+
+                                </td>
+
+                                <td>
+
+                                    {% if formulario.area_juridica %}
+
+                                        <span class="badge text-bg-light border">
+                                            {{ formulario.area_juridica.nome }}
+                                        </span>
+
+                                    {% else %}
+
+                                        <span class="text-muted">
+                                            Geral
+                                        </span>
+
+                                    {% endif %}
+
+                                </td>
+
+                                <td>
+                                    {{ formulario.versao }}
+                                </td>
+
+                                <td>
+
+                                    {% if formulario.quantidade_perguntas %}
+
+                                        <span class="badge text-bg-primary">
+                                            {{ formulario.quantidade_perguntas }}
+                                        </span>
+
+                                    {% else %}
+
+                                        <span class="badge text-bg-warning">
+                                            Nenhuma
+                                        </span>
+
+                                    {% endif %}
+
+                                </td>
+
+                                <td>
+
+                                    {% if formulario.ativo %}
+
+                                        <span class="badge text-bg-success">
+                                            Ativo
+                                        </span>
+
+                                    {% else %}
+
+                                        <span class="badge text-bg-secondary">
+                                            Inativo
+                                        </span>
+
+                                    {% endif %}
+
+                                </td>
+
+                                <td>
+
+                                    {% if formulario.atualizado_em %}
+
+                                        {{ formulario.atualizado_em.strftime('%d/%m/%Y') }}
+
+                                        <div class="text-muted small">
+                                            {{ formulario.atualizado_em.strftime('%H:%M') }}
+                                        </div>
+
+                                    {% else %}
+
+                                        —
+
+                                    {% endif %}
+
+                                </td>
+
+                                <td class="text-end pe-4">
+
+                                    <div
+                                        class="
+                                            d-flex
+                                            justify-content-end
+                                            flex-wrap
+                                            gap-2
+                                        "
+                                    >
+
+                                        <a
+                                            href="{{ url_for(
+                                                'perguntas_formulario.listar',
+                                                formulario_id=formulario.id
+                                            ) }}"
+                                            class="btn btn-sm btn-outline-primary"
+                                            title="Administrar perguntas"
+                                        >
+                                            🧩
+                                        </a>
+
+                                        <a
+                                            href="{{ url_for(
+                                                'formularios.editar',
+                                                formulario_id=formulario.id
+                                            ) }}"
+                                            class="btn btn-sm btn-outline-secondary"
+                                            title="Editar formulário"
+                                        >
+                                            ✏️
+                                        </a>
+
+                                        <form
+                                            method="POST"
+                                            action="{{ url_for(
+                                                'formularios.alternar_status',
+                                                formulario_id=formulario.id
+                                            ) }}"
+                                        >
+                                            <button
+                                                type="submit"
+                                                class="
+                                                    btn
+                                                    btn-sm
+                                                    {% if formulario.ativo %}
+                                                        btn-outline-warning
+                                                    {% else %}
+                                                        btn-outline-success
+                                                    {% endif %}
+                                                "
+                                                title="
+                                                    {% if formulario.ativo %}
+                                                        Desativar formulário
+                                                    {% else %}
+                                                        Ativar formulário
+                                                    {% endif %}
+                                                "
+                                            >
+                                                {% if formulario.ativo %}
+                                                    ⏸️
+                                                {% else %}
+                                                    ▶️
+                                                {% endif %}
+                                            </button>
+                                        </form>
+
+                                        <form
+                                            method="POST"
+                                            action="{{ url_for(
+                                                'formularios.excluir',
+                                                formulario_id=formulario.id
+                                            ) }}"
+                                            onsubmit="
+                                                return confirm(
+                                                    'Tem certeza que deseja excluir este modelo de formulário?'
+                                                );
+                                            "
+                                        >
+                                            <button
+                                                type="submit"
+                                                class="btn btn-sm btn-outline-danger"
+                                                title="Excluir formulário"
+                                            >
+                                                🗑️
+                                            </button>
+                                        </form>
+
+                                    </div>
+
+                                </td>
+
+                            </tr>
+
+                        {% endfor %}
+
+                    </tbody>
+
+                </table>
+
+            </div>
+
+        {% else %}
+
+            <div class="text-center py-5 px-3">
+
+                <div class="display-5 mb-3">
+                    📋
+                </div>
+
+                <h5>
+                    Nenhum formulário encontrado
+                </h5>
+
+                <p class="text-muted mb-4">
+
+                    {% if termo or status or area_juridica_id %}
+
+                        Nenhum formulário corresponde aos filtros informados.
+
+                    {% else %}
+
+                        Cadastre o primeiro formulário inteligente do escritório.
+
+                    {% endif %}
+
+                </p>
+
+                {% if termo or status or area_juridica_id %}
+
+                    <a
+                        href="{{ url_for('formularios.listar') }}"
+                        class="btn btn-outline-secondary"
+                    >
+                        Limpar filtros
+                    </a>
+
+                {% else %}
+
+                    <a
+                        href="{{ url_for('formularios.novo') }}"
+                        class="btn btn-primary"
+                    >
+                        + Cadastrar primeiro formulário
+                    </a>
+
+                {% endif %}
+
+            </div>
+
+        {% endif %}
+
+    </div>
+</div>
+
+{% endblock %}

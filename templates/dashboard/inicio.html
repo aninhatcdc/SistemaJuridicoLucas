@@ -1,0 +1,696 @@
+{% extends "base.html" %}
+
+{% block title %}Dashboard | Sistema Jurídico{% endblock %}
+{% block page_title %}Dashboard{% endblock %}
+{% block page_subtitle %}Acompanhe os principais indicadores e atividades do escritório{% endblock %}
+
+{% block content %}
+<style>
+    :root {
+        --dashboard-navy: #061a3a;
+        --dashboard-navy-soft: #0b2a58;
+        --dashboard-gold: #d4b25f;
+        --dashboard-gold-soft: #ead9a6;
+        --dashboard-bg: #f5f7fb;
+        --dashboard-card: #ffffff;
+        --dashboard-text: #0b1f3f;
+        --dashboard-muted: #6c7482;
+        --dashboard-border: #e3e7ef;
+    }
+
+    .dashboard-shell {
+        background: var(--dashboard-bg);
+        border-radius: 1.5rem;
+        padding: 1.5rem;
+    }
+
+    .dashboard-grid {
+        display: grid;
+        grid-template-columns: minmax(0, 1.7fr) minmax(320px, .8fr);
+        gap: 1.5rem;
+    }
+
+    .dashboard-panel {
+        background: var(--dashboard-card);
+        border: 1px solid var(--dashboard-border);
+        border-radius: 1.25rem;
+        box-shadow: 0 1rem 2.5rem rgba(6, 26, 58, .08);
+        overflow: hidden;
+    }
+
+    .dashboard-panel-header {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 1rem;
+        padding: 1.2rem 1.35rem;
+        background: linear-gradient(
+            135deg,
+            var(--dashboard-navy),
+            var(--dashboard-navy-soft)
+        );
+        color: #fff;
+        border-bottom: 3px solid var(--dashboard-gold);
+    }
+
+    .dashboard-panel-body {
+        padding: 1.3rem;
+    }
+
+    .dashboard-panel-title {
+        margin: 0;
+        color: #fff;
+        font-size: 1rem;
+        font-weight: 800;
+        letter-spacing: .02em;
+    }
+
+    .dashboard-panel-subtitle {
+        margin: .2rem 0 0;
+        color: rgba(255, 255, 255, .72);
+        font-size: .84rem;
+    }
+
+    .welcome-card {
+        position: relative;
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 1rem;
+        min-height: 175px;
+        padding: 2rem;
+        overflow: hidden;
+        border-radius: 1.35rem;
+        color: #fff;
+        background:
+            radial-gradient(
+                circle at 92% 20%,
+                rgba(212, 178, 95, .22),
+                transparent 23%
+            ),
+            linear-gradient(
+                135deg,
+                var(--dashboard-navy),
+                var(--dashboard-navy-soft)
+            );
+        box-shadow: 0 1.2rem 2.8rem rgba(6, 26, 58, .18);
+        border: 1px solid rgba(212, 178, 95, .35);
+    }
+
+    .welcome-card::after {
+        content: "";
+        position: absolute;
+        right: -70px;
+        bottom: -100px;
+        width: 260px;
+        height: 260px;
+        border: 1px solid rgba(212, 178, 95, .24);
+        border-radius: 50%;
+    }
+
+    .welcome-card h2 {
+        margin: .3rem 0 .5rem;
+        font-family: Georgia, "Times New Roman", serif;
+        font-size: clamp(1.7rem, 4vw, 2.7rem);
+        font-weight: 700;
+        letter-spacing: .02em;
+        text-transform: uppercase;
+    }
+
+    .welcome-card p {
+        max-width: 720px;
+        margin: 0;
+        color: rgba(255, 255, 255, .82);
+        font-size: 1rem;
+    }
+
+    .eyebrow {
+        color: var(--dashboard-gold);
+        font-size: .75rem;
+        font-weight: 800;
+        letter-spacing: .16em;
+    }
+
+    .welcome-mark {
+        position: relative;
+        z-index: 1;
+        display: grid;
+        place-items: center;
+        width: 6.4rem;
+        height: 6.4rem;
+        border: 1px solid rgba(212, 178, 95, .4);
+        border-radius: 50%;
+        color: var(--dashboard-gold);
+        font-family: Georgia, "Times New Roman", serif;
+        font-size: 2.1rem;
+        font-weight: 700;
+        flex: 0 0 auto;
+        background: rgba(255, 255, 255, .02);
+        box-shadow: inset 0 0 0 8px rgba(212, 178, 95, .04);
+    }
+
+    .metric-card {
+        position: relative;
+        height: 100%;
+        min-height: 145px;
+        padding: 1.3rem 1.35rem;
+        overflow: hidden;
+        border: 1px solid var(--dashboard-border);
+        border-top: 4px solid var(--dashboard-gold);
+        border-radius: 1.15rem;
+        background: var(--dashboard-card);
+        box-shadow: 0 .8rem 2rem rgba(6, 26, 58, .07);
+        transition: transform .2s ease, box-shadow .2s ease;
+    }
+
+    .metric-card:hover {
+        transform: translateY(-3px);
+        box-shadow: 0 1rem 2.5rem rgba(6, 26, 58, .11);
+    }
+
+    .metric-card::after {
+        content: "";
+        position: absolute;
+        right: -35px;
+        bottom: -45px;
+        width: 120px;
+        height: 120px;
+        border-radius: 50%;
+        background: rgba(212, 178, 95, .08);
+    }
+
+    .metric-icon {
+        display: grid;
+        place-items: center;
+        width: 2.7rem;
+        height: 2.7rem;
+        margin-bottom: .85rem;
+        border-radius: .8rem;
+        color: var(--dashboard-gold);
+        background: var(--dashboard-navy);
+        font-size: 1.15rem;
+    }
+
+    .metric-label {
+        display: block;
+        margin-bottom: .45rem;
+        color: var(--dashboard-muted);
+        font-size: .78rem;
+        font-weight: 800;
+        text-transform: uppercase;
+        letter-spacing: .055em;
+    }
+
+    .metric-card strong {
+        position: relative;
+        z-index: 1;
+        display: block;
+        color: var(--dashboard-text);
+        font-family: Georgia, "Times New Roman", serif;
+        font-size: clamp(1.55rem, 3vw, 2.15rem);
+        line-height: 1.1;
+    }
+
+    .timeline-filters {
+        display: flex;
+        flex-wrap: wrap;
+        gap: .5rem;
+        padding: 1.1rem 1.25rem 0;
+        background: #fff;
+    }
+
+    .timeline-filter {
+        display: inline-flex;
+        align-items: center;
+        min-height: 2.15rem;
+        padding: .42rem .8rem;
+        border: 1px solid var(--dashboard-gold-soft);
+        border-radius: 999px;
+        color: var(--dashboard-navy);
+        background: #fffdf7;
+        font-size: .81rem;
+        font-weight: 700;
+        text-decoration: none;
+    }
+
+    .timeline-filter:hover,
+    .timeline-filter.active {
+        color: var(--dashboard-navy);
+        border-color: var(--dashboard-gold);
+        background: var(--dashboard-gold);
+    }
+
+    .activity-list {
+        display: grid;
+        gap: 0;
+    }
+
+    .activity-item {
+        display: grid;
+        grid-template-columns: 3rem minmax(0, 1fr);
+        gap: .95rem;
+        padding: 1rem 0;
+        border-bottom: 1px solid var(--dashboard-border);
+    }
+
+    .activity-item:first-child {
+        padding-top: 0;
+    }
+
+    .activity-item:last-child {
+        padding-bottom: 0;
+        border-bottom: 0;
+    }
+
+    .activity-icon {
+        display: grid;
+        place-items: center;
+        width: 3rem;
+        height: 3rem;
+        border: 1px solid rgba(212, 178, 95, .35);
+        border-radius: .9rem;
+        color: var(--dashboard-gold);
+        background: var(--dashboard-navy);
+        font-size: 1.15rem;
+        box-shadow: 0 .4rem 1rem rgba(6, 26, 58, .12);
+    }
+
+    .activity-title {
+        margin: 0;
+        color: var(--dashboard-text);
+        font-size: .96rem;
+        font-weight: 800;
+    }
+
+    .activity-title a {
+        color: inherit;
+        text-decoration: none;
+    }
+
+    .activity-title a:hover {
+        color: #b79035;
+    }
+
+    .activity-description {
+        margin: .3rem 0 0;
+        color: var(--dashboard-muted);
+        font-size: .86rem;
+        white-space: pre-line;
+    }
+
+    .activity-meta {
+        display: flex;
+        flex-wrap: wrap;
+        gap: .35rem .8rem;
+        margin-top: .55rem;
+        color: #8a91a0;
+        font-size: .75rem;
+    }
+
+    .agenda-list {
+        display: grid;
+        gap: .8rem;
+    }
+
+    .agenda-item {
+        padding: .95rem;
+        border: 1px solid var(--dashboard-border);
+        border-left: 4px solid var(--dashboard-gold);
+        border-radius: .9rem;
+        background: #fbfcff;
+    }
+
+    .agenda-time {
+        color: #b79035;
+        font-size: .78rem;
+        font-weight: 900;
+    }
+
+    .agenda-title {
+        margin: .2rem 0;
+        color: var(--dashboard-text);
+        font-size: .92rem;
+        font-weight: 800;
+    }
+
+    .agenda-meta {
+        color: var(--dashboard-muted);
+        font-size: .77rem;
+    }
+
+    .quick-actions {
+        display: grid;
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+        gap: .75rem;
+    }
+
+    .quick-action {
+        display: flex;
+        align-items: center;
+        gap: .65rem;
+        min-height: 3.4rem;
+        padding: .8rem .9rem;
+        border: 1px solid var(--dashboard-border);
+        border-radius: .9rem;
+        color: var(--dashboard-text);
+        background: #fff;
+        font-size: .84rem;
+        font-weight: 800;
+        text-decoration: none;
+        transition: all .2s ease;
+    }
+
+    .quick-action:hover {
+        color: var(--dashboard-navy);
+        border-color: var(--dashboard-gold);
+        background: #fffaf0;
+        transform: translateY(-2px);
+    }
+
+    .quick-action span {
+        display: grid;
+        place-items: center;
+        width: 2.1rem;
+        height: 2.1rem;
+        border-radius: .65rem;
+        color: var(--dashboard-gold);
+        background: var(--dashboard-navy);
+        flex: 0 0 auto;
+    }
+
+    .dashboard-panel .btn-outline-primary {
+        color: var(--dashboard-gold);
+        border-color: var(--dashboard-gold);
+    }
+
+    .dashboard-panel .btn-outline-primary:hover {
+        color: var(--dashboard-navy);
+        border-color: var(--dashboard-gold);
+        background: var(--dashboard-gold);
+    }
+
+    .empty-state {
+        padding: 1.25rem;
+        border: 1px dashed var(--dashboard-gold-soft);
+        border-radius: .9rem;
+        color: var(--dashboard-muted);
+        background: #fffdf8;
+        text-align: center;
+        font-size: .88rem;
+    }
+
+    @media (max-width: 991.98px) {
+        .dashboard-grid {
+            grid-template-columns: 1fr;
+        }
+    }
+
+    @media (max-width: 767.98px) {
+        .dashboard-shell {
+            padding: 1rem;
+        }
+
+        .welcome-card {
+            padding: 1.5rem;
+        }
+
+        .welcome-mark {
+            width: 5rem;
+            height: 5rem;
+            font-size: 1.7rem;
+        }
+    }
+
+    @media (max-width: 575.98px) {
+        .welcome-mark {
+            display: none;
+        }
+
+        .quick-actions {
+            grid-template-columns: 1fr;
+        }
+    }
+</style>
+
+<div class="dashboard-shell">
+    <div class="welcome-card mb-4">
+        <div>
+            <span class="eyebrow">BEM-VINDO(A)</span>
+            <h2>{{ current_user.nome }}</h2>
+            <p>
+                Veja o movimento do escritório, os compromissos do dia
+                e os principais números em um só lugar.
+            </p>
+        </div>
+        <div class="welcome-mark">LT</div>
+    </div>
+
+    <div class="row g-4 mb-4">
+        <div class="col-12 col-md-6 col-xl-4">
+            <div class="metric-card">
+                <div class="metric-icon">👥</div>
+                <span class="metric-label">Clientes ativos</span>
+                <strong>{{ indicadores.clientes_ativos }}</strong>
+            </div>
+        </div>
+
+        <div class="col-12 col-md-6 col-xl-4">
+            <div class="metric-card">
+                <div class="metric-icon">⚖️</div>
+                <span class="metric-label">Processos ativos</span>
+                <strong>{{ indicadores.processos_ativos }}</strong>
+            </div>
+        </div>
+
+        <div class="col-12 col-md-6 col-xl-4">
+            <div class="metric-card">
+                <div class="metric-icon">💼</div>
+                <span class="metric-label">Honorários pendentes</span>
+                <strong>
+                    R$
+                    {{ '{:,.2f}'.format(indicadores.honorarios_pendentes|float)
+                        |replace(',', 'X')
+                        |replace('.', ',')
+                        |replace('X', '.') }}
+                </strong>
+            </div>
+        </div>
+
+        <div class="col-12 col-md-6 col-xl-4">
+            <div class="metric-card">
+                <div class="metric-icon">💰</div>
+                <span class="metric-label">Recebimentos no mês</span>
+                <strong>
+                    R$
+                    {{ '{:,.2f}'.format(indicadores.recebimentos_mes|float)
+                        |replace(',', 'X')
+                        |replace('.', ',')
+                        |replace('X', '.') }}
+                </strong>
+            </div>
+        </div>
+
+        <div class="col-12 col-md-6 col-xl-4">
+            <div class="metric-card">
+                <div class="metric-icon">⏳</div>
+                <span class="metric-label">Cobranças atrasadas</span>
+                <strong>{{ indicadores.cobrancas_atrasadas }}</strong>
+            </div>
+        </div>
+
+        <div class="col-12 col-md-6 col-xl-4">
+            <div class="metric-card">
+                <div class="metric-icon">📅</div>
+                <span class="metric-label">Compromissos de hoje</span>
+                <strong>{{ indicadores.compromissos_hoje }}</strong>
+            </div>
+        </div>
+    </div>
+
+    <div class="dashboard-grid">
+        <section class="dashboard-panel">
+            <div class="dashboard-panel-header">
+                <div>
+                    <h3 class="dashboard-panel-title">Últimas atividades</h3>
+                    <p class="dashboard-panel-subtitle">
+                        Eventos registrados na Timeline dos casos
+                    </p>
+                </div>
+            </div>
+
+            <div class="timeline-filters">
+                {% for codigo, configuracao in modulos_timeline.items() %}
+                    <a
+                        href="{{ url_for('dashboard.inicio', modulo=codigo) }}"
+                        class="timeline-filter {% if modulo_ativo == codigo %}active{% endif %}"
+                    >
+                        {{ configuracao.rotulo }}
+                    </a>
+                {% endfor %}
+            </div>
+
+            <div class="dashboard-panel-body">
+                {% if atividades %}
+                    <div class="activity-list">
+                        {% for atividade in atividades %}
+                            <article class="activity-item">
+                                <div class="activity-icon">
+                                    {{ atividade.icone or '📝' }}
+                                </div>
+
+                                <div>
+                                    <h4 class="activity-title">
+                                        {% if atividade.url %}
+                                            <a href="{{ atividade.url }}">
+                                                {{ atividade.titulo }}
+                                            </a>
+                                        {% else %}
+                                            {{ atividade.titulo }}
+                                        {% endif %}
+                                    </h4>
+
+                                    {% if atividade.descricao %}
+                                        <p class="activity-description">
+                                            {{ atividade.descricao }}
+                                        </p>
+                                    {% endif %}
+
+                                    <div class="activity-meta">
+                                        <span>
+                                            📁
+                                            {% if atividade.caso %}
+                                                {{ atividade.caso.numero_interno }}
+                                            {% else %}
+                                                Caso não identificado
+                                            {% endif %}
+                                        </span>
+
+                                        <span>
+                                            👤
+                                            {% if atividade.usuario %}
+                                                {{ atividade.usuario.nome }}
+                                            {% else %}
+                                                Sistema
+                                            {% endif %}
+                                        </span>
+
+                                        <span>
+                                            🕒 {{ atividade.data_hora_formatada }}
+                                        </span>
+                                    </div>
+                                </div>
+                            </article>
+                        {% endfor %}
+                    </div>
+                {% else %}
+                    <div class="empty-state">
+                        Nenhuma atividade encontrada para este filtro.
+                    </div>
+                {% endif %}
+            </div>
+        </section>
+
+        <aside>
+            <section class="dashboard-panel mb-4">
+                <div class="dashboard-panel-header">
+                    <div>
+                        <h3 class="dashboard-panel-title">Compromissos de hoje</h3>
+                        <p class="dashboard-panel-subtitle">
+                            {{ hoje.strftime('%d/%m/%Y') }}
+                        </p>
+                    </div>
+
+                    <a
+                        href="{{ url_for('agenda.listar_eventos', periodo='hoje') }}"
+                        class="btn btn-sm btn-outline-primary"
+                    >
+                        Ver agenda
+                    </a>
+                </div>
+
+                <div class="dashboard-panel-body">
+                    {% if compromissos_hoje %}
+                        <div class="agenda-list">
+                            {% for evento in compromissos_hoje %}
+                                <div class="agenda-item">
+                                    <div class="agenda-time">
+                                        {{ evento.horario_formatado }}
+                                    </div>
+
+                                    <div class="agenda-title">
+                                        {{ evento.titulo }}
+                                    </div>
+
+                                    <div class="agenda-meta">
+                                        {{ evento.tipo_formatado }}
+                                        · {{ evento.prioridade_formatada }}
+
+                                        {% if evento.responsavel %}
+                                            · {{ evento.responsavel.nome }}
+                                        {% endif %}
+                                    </div>
+                                </div>
+                            {% endfor %}
+                        </div>
+                    {% else %}
+                        <div class="empty-state">
+                            Nenhum compromisso pendente para hoje.
+                        </div>
+                    {% endif %}
+                </div>
+            </section>
+
+            <section class="dashboard-panel">
+                <div class="dashboard-panel-header">
+                    <div>
+                        <h3 class="dashboard-panel-title">Atalhos rápidos</h3>
+                        <p class="dashboard-panel-subtitle">
+                            Acesse as principais áreas do sistema
+                        </p>
+                    </div>
+                </div>
+
+                <div class="dashboard-panel-body">
+                    <div class="quick-actions">
+                        <a class="quick-action" href="/clientes/novo">
+                            <span>👤</span>
+                            Novo cliente
+                        </a>
+
+                        <a class="quick-action" href="/casos/novo">
+                            <span>📁</span>
+                            Novo caso
+                        </a>
+
+                        <a
+                            class="quick-action"
+                            href="{{ url_for('agenda.novo_evento') }}"
+                        >
+                            <span>📅</span>
+                            Novo compromisso
+                        </a>
+
+                        <a
+                            class="quick-action"
+                            href="{{ url_for('agenda.calendario') }}"
+                        >
+                            <span>🗓️</span>
+                            Abrir calendário
+                        </a>
+
+                        <a class="quick-action" href="/clientes">
+                            <span>🔎</span>
+                            Consultar clientes
+                        </a>
+
+                        <a class="quick-action" href="/casos">
+                            <span>⚖️</span>
+                            Consultar casos
+                        </a>
+                    </div>
+                </div>
+            </section>
+        </aside>
+    </div>
+</div>
+{% endblock %}

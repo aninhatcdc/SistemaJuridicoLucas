@@ -1,0 +1,62 @@
+{% extends "base.html" %}
+
+{% block title %}
+Nova pergunta
+{% endblock %}
+
+{% block page_title %}
+Nova pergunta
+{% endblock %}
+
+{% block page_subtitle %}
+Adicione uma pergunta ao formulário {{ formulario.nome }}.
+{% endblock %}
+
+{% block content %}
+
+<div
+    class="
+        d-flex
+        flex-column
+        flex-lg-row
+        justify-content-between
+        align-items-lg-center
+        gap-3
+        mb-4
+    "
+>
+
+    <div>
+
+        <h2 class="mb-1">
+            🧩 Nova pergunta
+        </h2>
+
+        <p class="text-muted mb-0">
+            Formulário:
+            <strong>{{ formulario.nome }}</strong>
+        </p>
+
+    </div>
+
+    <a
+        href="{{ url_for(
+            'perguntas_formulario.listar',
+            formulario_id=formulario.id
+        ) }}"
+        class="btn btn-outline-secondary"
+    >
+        Voltar
+    </a>
+
+</div>
+
+<form method="POST">
+
+    {% set texto_botao = "Cadastrar pergunta" %}
+
+    {% include "perguntas_formulario/_form.html" %}
+
+</form>
+
+{% endblock %}

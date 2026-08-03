@@ -1,0 +1,56 @@
+{% extends "base.html" %}
+
+{% block title %}
+Editar modelo
+{% endblock %}
+
+{% block page_title %}
+Editar modelo de documento
+{% endblock %}
+
+{% block page_subtitle %}
+Atualize as informações ou substitua o arquivo Word deste modelo.
+{% endblock %}
+
+{% block content %}
+
+<div class="d-flex justify-content-between align-items-center mb-4">
+
+    <div>
+        <h2 class="mb-1">
+            ✏️ Editar modelo
+        </h2>
+
+        <p class="text-muted mb-0">
+            {{ modelo.nome }}
+        </p>
+    </div>
+
+    <div class="d-flex gap-2">
+        <a
+            href="{{ url_for('modelos.download', modelo_id=modelo.id) }}"
+            class="btn btn-outline-primary"
+        >
+            ⬇️ Baixar arquivo
+        </a>
+
+        <a
+            href="{{ url_for('modelos.listar') }}"
+            class="btn btn-outline-secondary"
+        >
+            Voltar
+        </a>
+    </div>
+
+</div>
+
+<form
+    method="POST"
+    enctype="multipart/form-data"
+>
+    {% set texto_botao = "Salvar alterações" %}
+
+    {% include "modelos/_form.html" %}
+</form>
+
+{% endblock %}

@@ -1,0 +1,294 @@
+{% set resposta = respostas_por_pergunta.get(pergunta.id) %}
+{% set valor = resposta.valor if resposta else pergunta.valor_padrao %}
+
+<div class="mb-4">
+
+    <label
+        class="form-label fw-semibold"
+        for="pergunta_{{ pergunta.id }}"
+    >
+        {{ pergunta.texto }}
+
+        {% if pergunta.obrigatoria %}
+            <span class="text-danger">*</span>
+        {% endif %}
+    </label>
+
+    {% if pergunta.descricao %}
+
+        <div class="text-muted small mb-2">
+            {{ pergunta.descricao }}
+        </div>
+
+    {% endif %}
+
+    {% if pergunta.tipo == "TEXTO" %}
+
+        <input
+            type="text"
+            class="form-control"
+            id="pergunta_{{ pergunta.id }}"
+            name="pergunta_{{ pergunta.id }}"
+            value="{{ valor or '' }}"
+            placeholder="{{ pergunta.placeholder or '' }}"
+        >
+
+    {% elif pergunta.tipo == "TEXTO_LONGO" %}
+
+        <textarea
+            class="form-control"
+            id="pergunta_{{ pergunta.id }}"
+            name="pergunta_{{ pergunta.id }}"
+            rows="5"
+            placeholder="{{ pergunta.placeholder or '' }}"
+        >{{ valor or '' }}</textarea>
+
+    {% elif pergunta.tipo == "NUMERO" %}
+
+        <input
+            type="number"
+            class="form-control"
+            id="pergunta_{{ pergunta.id }}"
+            name="pergunta_{{ pergunta.id }}"
+            value="{{ valor if valor is not none else '' }}"
+            placeholder="{{ pergunta.placeholder or '' }}"
+            step="any"
+        >
+
+    {% elif pergunta.tipo == "MOEDA" %}
+
+        <div class="input-group">
+
+            <span class="input-group-text">
+                R$
+            </span>
+
+            <input
+                type="text"
+                class="form-control campo-moeda"
+                id="pergunta_{{ pergunta.id }}"
+                name="pergunta_{{ pergunta.id }}"
+                value="{{ valor if valor is not none else '' }}"
+                placeholder="{{ pergunta.placeholder or '0,00' }}"
+                inputmode="decimal"
+            >
+
+        </div>
+
+    {% elif pergunta.tipo == "DATA" %}
+
+        <input
+            type="date"
+            class="form-control"
+            id="pergunta_{{ pergunta.id }}"
+            name="pergunta_{{ pergunta.id }}"
+            value="{% if valor %}{{ valor.strftime('%Y-%m-%d') if valor.strftime is defined else valor }}{% endif %}"
+        >
+
+    {% elif pergunta.tipo == "HORA" %}
+
+        <input
+            type="time"
+            class="form-control"
+            id="pergunta_{{ pergunta.id }}"
+            name="pergunta_{{ pergunta.id }}"
+            value="{% if valor %}{{ valor.strftime('%H:%M') if valor.strftime is defined else valor }}{% endif %}"
+        >
+
+    {% elif pergunta.tipo == "EMAIL" %}
+
+        <input
+            type="email"
+            class="form-control"
+            id="pergunta_{{ pergunta.id }}"
+            name="pergunta_{{ pergunta.id }}"
+            value="{{ valor or '' }}"
+            placeholder="{{ pergunta.placeholder or 'nome@exemplo.com' }}"
+        >
+
+    {% elif pergunta.tipo == "TELEFONE" %}
+
+        <input
+            type="tel"
+            class="form-control"
+            id="pergunta_{{ pergunta.id }}"
+            name="pergunta_{{ pergunta.id }}"
+            value="{{ valor or '' }}"
+            placeholder="{{ pergunta.placeholder or '(00) 00000-0000' }}"
+        >
+
+    {% elif pergunta.tipo == "CPF" %}
+
+        <input
+            type="text"
+            class="form-control"
+            id="pergunta_{{ pergunta.id }}"
+            name="pergunta_{{ pergunta.id }}"
+            value="{{ valor or '' }}"
+            placeholder="{{ pergunta.placeholder or '000.000.000-00' }}"
+            maxlength="14"
+        >
+
+    {% elif pergunta.tipo == "CNPJ" %}
+
+        <input
+            type="text"
+            class="form-control"
+            id="pergunta_{{ pergunta.id }}"
+            name="pergunta_{{ pergunta.id }}"
+            value="{{ valor or '' }}"
+            placeholder="{{ pergunta.placeholder or '00.000.000/0000-00' }}"
+            maxlength="18"
+        >
+
+    {% elif pergunta.tipo == "SIM_NAO" %}
+
+        <div class="d-flex flex-wrap gap-3">
+
+            <div class="form-check">
+
+                <input
+                    class="form-check-input"
+                    type="radio"
+                    name="pergunta_{{ pergunta.id }}"
+                    id="pergunta_{{ pergunta.id }}_sim"
+                    value="SIM"
+                    {% if valor is sameas true %}checked{% endif %}
+                >
+
+                <label
+                    class="form-check-label"
+                    for="pergunta_{{ pergunta.id }}_sim"
+                >
+                    Sim
+                </label>
+
+            </div>
+
+            <div class="form-check">
+
+                <input
+                    class="form-check-input"
+                    type="radio"
+                    name="pergunta_{{ pergunta.id }}"
+                    id="pergunta_{{ pergunta.id }}_nao"
+                    value="NAO"
+                    {% if valor is sameas false %}checked{% endif %}
+                >
+
+                <label
+                    class="form-check-label"
+                    for="pergunta_{{ pergunta.id }}_nao"
+                >
+                    Não
+                </label>
+
+            </div>
+
+            <div class="form-check">
+
+                <input
+                    class="form-check-input"
+                    type="radio"
+                    name="pergunta_{{ pergunta.id }}"
+                    id="pergunta_{{ pergunta.id }}_vazio"
+                    value=""
+                    {% if valor is none or valor == '' %}checked{% endif %}
+                >
+
+                <label
+                    class="form-check-label text-muted"
+                    for="pergunta_{{ pergunta.id }}_vazio"
+                >
+                    Não informado
+                </label>
+
+            </div>
+
+        </div>
+
+    {% elif pergunta.tipo == "SELECAO" %}
+
+        <select
+            class="form-select"
+            id="pergunta_{{ pergunta.id }}"
+            name="pergunta_{{ pergunta.id }}"
+        >
+
+            <option value="">
+                Selecione
+            </option>
+
+            {% for opcao in pergunta.opcoes %}
+
+                <option
+                    value="{{ opcao }}"
+                    {% if valor == opcao %}selected{% endif %}
+                >
+                    {{ opcao }}
+                </option>
+
+            {% endfor %}
+
+        </select>
+
+    {% elif pergunta.tipo == "MULTIPLA_SELECAO" %}
+
+        {% set valores_marcados = resposta.valor_lista if resposta else [] %}
+
+        <div class="border rounded-3 p-3">
+
+            {% for opcao in pergunta.opcoes %}
+
+                <div class="form-check mb-2">
+
+                    <input
+                        class="form-check-input"
+                        type="checkbox"
+                        id="pergunta_{{ pergunta.id }}_{{ loop.index }}"
+                        name="pergunta_{{ pergunta.id }}"
+                        value="{{ opcao }}"
+                        {% if opcao in valores_marcados %}checked{% endif %}
+                    >
+
+                    <label
+                        class="form-check-label"
+                        for="pergunta_{{ pergunta.id }}_{{ loop.index }}"
+                    >
+                        {{ opcao }}
+                    </label>
+
+                </div>
+
+            {% endfor %}
+
+        </div>
+
+    {% else %}
+
+        <input
+            type="text"
+            class="form-control"
+            id="pergunta_{{ pergunta.id }}"
+            name="pergunta_{{ pergunta.id }}"
+            value="{{ valor or '' }}"
+        >
+
+    {% endif %}
+
+    <div class="d-flex flex-wrap justify-content-between gap-2 mt-2">
+
+        <small class="text-muted">
+            Código:
+            <code>{{ pergunta.codigo }}</code>
+        </small>
+
+        {% if pergunta.obrigatoria %}
+            <small class="text-danger">
+                Resposta obrigatória
+            </small>
+        {% endif %}
+
+    </div>
+
+</div>

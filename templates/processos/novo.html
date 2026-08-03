@@ -1,0 +1,282 @@
+{% extends "base.html" %}
+
+{% block title %}
+Novo Processo
+{% endblock %}
+
+{% block page_title %}
+Novo Processo
+{% endblock %}
+
+{% block page_subtitle %}
+Caso {{ caso.numero_interno }}
+{% endblock %}
+
+{% block content %}
+
+<form method="POST">
+
+<div class="row g-4">
+
+    <div class="col-lg-8">
+
+        <div class="card shadow-sm border-0">
+
+            <div class="card-body p-4">
+
+                <h5 class="fw-semibold mb-4">
+                    Dados do Processo
+                </h5>
+
+                <div class="row g-3">
+
+                    <div class="col-md-6">
+
+                        <label class="form-label">
+                            Número CNJ
+                        </label>
+
+                        <input
+                            type="text"
+                            class="form-control"
+                            name="numero_cnj"
+                            placeholder="0000000-00.0000.0.00.0000"
+                        >
+
+                    </div>
+
+                    <div class="col-md-6">
+
+                        <label class="form-label">
+                            Situação
+                        </label>
+
+                        <select
+                            class="form-select"
+                            name="situacao"
+                        >
+
+                            <option value="ATIVO">
+                                Ativo
+                            </option>
+
+                            <option value="SUSPENSO">
+                                Suspenso
+                            </option>
+
+                            <option value="ARQUIVADO">
+                                Arquivado
+                            </option>
+
+                            <option value="ENCERRADO">
+                                Encerrado
+                            </option>
+
+                        </select>
+
+                    </div>
+
+                    <div class="col-md-6">
+
+                        <label class="form-label">
+                            Tribunal
+                        </label>
+
+                        <input
+                            class="form-control"
+                            name="tribunal"
+                        >
+
+                    </div>
+
+                    <div class="col-md-6">
+
+                        <label class="form-label">
+                            Comarca
+                        </label>
+
+                        <input
+                            class="form-control"
+                            name="comarca"
+                        >
+
+                    </div>
+
+                    <div class="col-md-6">
+
+                        <label class="form-label">
+                            Vara
+                        </label>
+
+                        <input
+                            class="form-control"
+                            name="vara"
+                        >
+
+                    </div>
+
+                    <div class="col-md-6">
+
+                        <label class="form-label">
+                            Classe Processual
+                        </label>
+
+                        <input
+                            class="form-control"
+                            name="classe_processual"
+                        >
+
+                    </div>
+
+                    <div class="col-12">
+
+                        <label class="form-label">
+                            Assunto
+                        </label>
+
+                        <input
+                            class="form-control"
+                            name="assunto"
+                        >
+
+                    </div>
+
+                    <div class="col-md-6">
+
+                        <label class="form-label">
+                            Polo Ativo
+                        </label>
+
+                        <textarea
+                            class="form-control"
+                            rows="3"
+                            name="polo_ativo"
+                        ></textarea>
+
+                    </div>
+
+                    <div class="col-md-6">
+
+                        <label class="form-label">
+                            Polo Passivo
+                        </label>
+
+                        <textarea
+                            class="form-control"
+                            rows="3"
+                            name="polo_passivo"
+                        ></textarea>
+
+                    </div>
+
+                    <div class="col-md-6">
+
+                        <label class="form-label">
+                            Data da Distribuição
+                        </label>
+
+                        <input
+                            type="date"
+                            class="form-control"
+                            name="data_distribuicao"
+                        >
+
+                    </div>
+
+                    <div class="col-md-6">
+
+                        <label class="form-label">
+                            Valor da Causa
+                        </label>
+
+                        <input
+                            class="form-control"
+                            name="valor_causa"
+                            placeholder="0,00"
+                        >
+
+                    </div>
+
+                    <div class="col-12">
+
+                        <label class="form-label">
+                            Observações
+                        </label>
+
+                        <textarea
+                            class="form-control"
+                            rows="5"
+                            name="observacoes"
+                        ></textarea>
+
+                    </div>
+
+                </div>
+
+            </div>
+
+        </div>
+
+    </div>
+
+
+    <div class="col-lg-4">
+
+        <div class="card shadow-sm border-0">
+
+            <div class="card-body">
+
+                <h6 class="fw-semibold mb-3">
+                    Caso
+                </h6>
+
+                <p class="mb-1">
+
+                    <strong>
+                        {{ caso.numero_interno }}
+                    </strong>
+
+                </p>
+
+                <p class="mb-1">
+                    {{ caso.titulo }}
+                </p>
+
+                <p class="text-muted">
+                    {{ caso.cliente.nome }}
+                </p>
+
+                <hr>
+
+                <div class="d-grid gap-2">
+
+                    <button
+                        class="btn btn-primary"
+                        type="submit"
+                    >
+                        Salvar Processo
+                    </button>
+
+                    <a
+                        href="{{ url_for(
+                            'casos.detalhes',
+                            caso_id=caso.id
+                        ) }}"
+                        class="btn btn-outline-secondary"
+                    >
+                        Cancelar
+                    </a>
+
+                </div>
+
+            </div>
+
+        </div>
+
+    </div>
+
+</div>
+
+</form>
+
+{% endblock %}

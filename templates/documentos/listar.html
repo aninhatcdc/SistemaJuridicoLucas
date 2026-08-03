@@ -1,0 +1,839 @@
+{% extends "base.html" %}
+
+{% block title %}
+Documentos
+{% endblock %}
+
+{% block page_title %}
+Documentos
+{% endblock %}
+
+{% block page_subtitle %}
+Central de documentos, contratos e arquivos vinculados aos casos.
+{% endblock %}
+
+{% block content %}
+
+{% macro tamanho_total_formatado(total_bytes) %}
+    {% set total = total_bytes or 0 %}
+
+    {% if total < 1024 %}
+        {{ total }} bytes
+    {% elif total < 1048576 %}
+        {{ "%.1f"|format(total / 1024) }} KB
+    {% elif total < 1073741824 %}
+        {{ "%.1f"|format(total / 1048576) }} MB
+    {% else %}
+        {{ "%.1f"|format(total / 1073741824) }} GB
+    {% endif %}
+{% endmacro %}
+
+<div class="d-flex flex-wrap justify-content-between align-items-center gap-3 mb-4">
+
+    <div>
+
+        <h3 class="fw-bold mb-1">
+            📄 Central de documentos
+        </h3>
+
+        <p class="text-muted mb-0">
+            Encontre rapidamente os documentos enviados ou gerados pelo sistema.
+        </p>
+
+    </div>
+
+</div>
+
+
+<div class="row g-3 mb-4">
+
+    <div class="col-sm-6 col-xl-3">
+
+        <div class="card border-0 shadow-sm h-100">
+
+            <div class="card-body p-4">
+
+                <div class="d-flex justify-content-between align-items-start gap-3">
+
+                    <div>
+
+                        <p class="text-muted mb-2">
+                            Documentos encontrados
+                        </p>
+
+                        <h3 class="fw-bold mb-0">
+                            {{ total_documentos }}
+                        </h3>
+
+                    </div>
+
+                    <span style="font-size: 1.8rem;">
+                        📄
+                    </span>
+
+                </div>
+
+            </div>
+
+        </div>
+
+    </div>
+
+
+    <div class="col-sm-6 col-xl-3">
+
+        <div class="card border-0 shadow-sm h-100">
+
+            <div class="card-body p-4">
+
+                <div class="d-flex justify-content-between align-items-start gap-3">
+
+                    <div>
+
+                        <p class="text-muted mb-2">
+                            Espaço utilizado
+                        </p>
+
+                        <h3 class="fw-bold mb-0">
+                            {{ tamanho_total_formatado(total_bytes) }}
+                        </h3>
+
+                    </div>
+
+                    <span style="font-size: 1.8rem;">
+                        💾
+                    </span>
+
+                </div>
+
+            </div>
+
+        </div>
+
+    </div>
+
+
+    <div class="col-sm-6 col-xl-3">
+
+        <div class="card border-0 shadow-sm h-100">
+
+            <div class="card-body p-4">
+
+                <div class="d-flex justify-content-between align-items-start gap-3">
+
+                    <div>
+
+                        <p class="text-muted mb-2">
+                            Enviados hoje
+                        </p>
+
+                        <h3 class="fw-bold mb-0">
+                            {{ enviados_hoje }}
+                        </h3>
+
+                    </div>
+
+                    <span style="font-size: 1.8rem;">
+                        📤
+                    </span>
+
+                </div>
+
+            </div>
+
+        </div>
+
+    </div>
+
+
+    <div class="col-sm-6 col-xl-3">
+
+        <div class="card border-0 shadow-sm h-100">
+
+            <div class="card-body p-4">
+
+                <div class="d-flex justify-content-between align-items-start gap-3">
+
+                    <div>
+
+                        <p class="text-muted mb-2">
+                            Arquivos PDF
+                        </p>
+
+                        <h3 class="fw-bold mb-0">
+                            {{ documentos_pdf }}
+                        </h3>
+
+                    </div>
+
+                    <span style="font-size: 1.8rem;">
+                        📕
+                    </span>
+
+                </div>
+
+            </div>
+
+        </div>
+
+    </div>
+
+</div>
+
+
+<div class="card border-0 shadow-sm mb-4">
+
+    <div class="card-body p-4">
+
+        <div class="d-flex align-items-center gap-2 mb-4">
+
+            <span style="font-size: 1.4rem;">
+                🔎
+            </span>
+
+            <div>
+
+                <h5 class="fw-semibold mb-1">
+                    Pesquisa e filtros
+                </h5>
+
+                <p class="text-muted mb-0">
+                    Combine os filtros para localizar documentos específicos.
+                </p>
+
+            </div>
+
+        </div>
+
+
+        <form method="GET">
+
+            <div class="row g-3">
+
+                <div class="col-xl-4 col-lg-6">
+
+                    <label
+                        for="q"
+                        class="form-label fw-semibold"
+                    >
+                        Pesquisar
+                    </label>
+
+                    <input
+                        type="text"
+                        class="form-control"
+                        id="q"
+                        name="q"
+                        value="{{ filtros.termo }}"
+                        placeholder="Documento, cliente, caso ou observação"
+                    >
+
+                </div>
+
+
+                <div class="col-xl-4 col-lg-6">
+
+                    <label
+                        for="cliente_id"
+                        class="form-label fw-semibold"
+                    >
+                        Cliente
+                    </label>
+
+                    <select
+                        class="form-select"
+                        id="cliente_id"
+                        name="cliente_id"
+                    >
+
+                        <option value="">
+                            Todos os clientes
+                        </option>
+
+                        {% for cliente in clientes %}
+
+                            <option
+                                value="{{ cliente.id }}"
+                                {% if filtros.cliente_id == cliente.id %}
+                                    selected
+                                {% endif %}
+                            >
+                                {{ cliente.nome }}
+                            </option>
+
+                        {% endfor %}
+
+                    </select>
+
+                </div>
+
+
+                <div class="col-xl-4 col-lg-6">
+
+                    <label
+                        for="caso_id"
+                        class="form-label fw-semibold"
+                    >
+                        Caso
+                    </label>
+
+                    <select
+                        class="form-select"
+                        id="caso_id"
+                        name="caso_id"
+                    >
+
+                        <option value="">
+                            Todos os casos
+                        </option>
+
+                        {% for caso in casos %}
+
+                            <option
+                                value="{{ caso.id }}"
+                                {% if filtros.caso_id == caso.id %}
+                                    selected
+                                {% endif %}
+                            >
+                                {{ caso.numero_interno }}
+                                — {{ caso.titulo }}
+                            </option>
+
+                        {% endfor %}
+
+                    </select>
+
+                </div>
+
+
+                <div class="col-xl-3 col-lg-6">
+
+                    <label
+                        for="area_id"
+                        class="form-label fw-semibold"
+                    >
+                        Área jurídica
+                    </label>
+
+                    <select
+                        class="form-select"
+                        id="area_id"
+                        name="area_id"
+                    >
+
+                        <option value="">
+                            Todas as áreas
+                        </option>
+
+                        {% for area in areas %}
+
+                            <option
+                                value="{{ area.id }}"
+                                {% if filtros.area_id == area.id %}
+                                    selected
+                                {% endif %}
+                            >
+                                {{ area.icone or '⚖' }}
+                                {{ area.nome }}
+                            </option>
+
+                        {% endfor %}
+
+                    </select>
+
+                </div>
+
+
+                <div class="col-xl-3 col-lg-6">
+
+                    <label
+                        for="tipo_documento"
+                        class="form-label fw-semibold"
+                    >
+                        Tipo
+                    </label>
+
+                    <select
+                        class="form-select"
+                        id="tipo_documento"
+                        name="tipo_documento"
+                    >
+
+                        <option value="">
+                            Todos os tipos
+                        </option>
+
+                        {% for tipo in tipos_documento %}
+
+                            <option
+                                value="{{ tipo }}"
+                                {% if filtros.tipo_documento == tipo %}
+                                    selected
+                                {% endif %}
+                            >
+                                {{ tipo }}
+                            </option>
+
+                        {% endfor %}
+
+                    </select>
+
+                </div>
+
+
+                <div class="col-xl-2 col-lg-6">
+
+                    <label
+                        for="extensao"
+                        class="form-label fw-semibold"
+                    >
+                        Formato
+                    </label>
+
+                    <select
+                        class="form-select"
+                        id="extensao"
+                        name="extensao"
+                    >
+
+                        <option value="">
+                            Todos
+                        </option>
+
+                        {% for item in extensoes %}
+
+                            <option
+                                value="{{ item|lower }}"
+                                {% if filtros.extensao == item|lower %}
+                                    selected
+                                {% endif %}
+                            >
+                                {{ item|upper }}
+                            </option>
+
+                        {% endfor %}
+
+                    </select>
+
+                </div>
+
+
+                <div class="col-xl-4 col-lg-6">
+
+                    <label
+                        for="usuario_id"
+                        class="form-label fw-semibold"
+                    >
+                        Enviado ou gerado por
+                    </label>
+
+                    <select
+                        class="form-select"
+                        id="usuario_id"
+                        name="usuario_id"
+                    >
+
+                        <option value="">
+                            Todos os usuários
+                        </option>
+
+                        {% for usuario in usuarios %}
+
+                            <option
+                                value="{{ usuario.id }}"
+                                {% if filtros.usuario_id == usuario.id %}
+                                    selected
+                                {% endif %}
+                            >
+                                {{ usuario.nome }}
+                            </option>
+
+                        {% endfor %}
+
+                    </select>
+
+                </div>
+
+
+                <div class="col-xl-2 col-lg-6">
+
+                    <label
+                        for="data_inicial"
+                        class="form-label fw-semibold"
+                    >
+                        Data inicial
+                    </label>
+
+                    <input
+                        type="date"
+                        class="form-control"
+                        id="data_inicial"
+                        name="data_inicial"
+                        value="{{ filtros.data_inicial }}"
+                    >
+
+                </div>
+
+
+                <div class="col-xl-2 col-lg-6">
+
+                    <label
+                        for="data_final"
+                        class="form-label fw-semibold"
+                    >
+                        Data final
+                    </label>
+
+                    <input
+                        type="date"
+                        class="form-control"
+                        id="data_final"
+                        name="data_final"
+                        value="{{ filtros.data_final }}"
+                    >
+
+                </div>
+
+
+                <div class="col-12">
+
+                    <div class="d-flex flex-wrap justify-content-end gap-2">
+
+                        <a
+                            href="{{ url_for('documentos.listar') }}"
+                            class="btn btn-outline-secondary"
+                        >
+                            Limpar filtros
+                        </a>
+
+                        <button
+                            type="submit"
+                            class="btn btn-primary"
+                        >
+                            Pesquisar documentos
+                        </button>
+
+                    </div>
+
+                </div>
+
+            </div>
+
+        </form>
+
+    </div>
+
+</div>
+
+
+<div class="card border-0 shadow-sm">
+
+    <div class="card-header bg-white border-0 px-4 pt-4 pb-0">
+
+        <div class="d-flex flex-wrap justify-content-between align-items-center gap-3">
+
+            <div>
+
+                <h5 class="fw-semibold mb-1">
+                    Arquivos encontrados
+                </h5>
+
+                <p class="text-muted mb-0">
+                    {{ total_documentos }} documento(s) de acordo com os filtros.
+                </p>
+
+            </div>
+
+        </div>
+
+    </div>
+
+
+    <div class="card-body p-4">
+
+        {% if documentos %}
+
+            <div class="table-responsive">
+
+                <table class="table align-middle mb-0">
+
+                    <thead class="table-light">
+
+                        <tr>
+                            <th>Documento</th>
+                            <th>Cliente e caso</th>
+                            <th>Área</th>
+                            <th>Responsável</th>
+                            <th>Data</th>
+                            <th class="text-end">Ações</th>
+                        </tr>
+
+                    </thead>
+
+                    <tbody>
+
+                        {% for documento in documentos %}
+
+                            <tr>
+
+                                <td>
+
+                                    <div class="d-flex align-items-start gap-3">
+
+                                        <div
+                                            class="d-flex align-items-center justify-content-center bg-light border rounded-3 flex-shrink-0"
+                                            style="
+                                                width: 44px;
+                                                height: 44px;
+                                                font-size: 1.35rem;
+                                            "
+                                        >
+                                            {{ documento.icone }}
+                                        </div>
+
+                                        <div>
+
+                                            <div class="fw-semibold">
+                                                {{ documento.nome_original }}
+                                            </div>
+
+                                            <small class="text-muted">
+                                                {{ documento.extensao|upper }}
+                                                · {{ documento.tamanho_formatado }}
+                                            </small>
+
+                                            <div class="mt-1">
+
+                                                {% if documento.tipo_documento %}
+
+                                                    <span class="badge bg-light text-dark border">
+                                                        {{ documento.tipo_documento }}
+                                                    </span>
+
+                                                {% endif %}
+
+                                            </div>
+
+                                            {% if documento.observacoes %}
+
+                                                <div class="small text-muted mt-2">
+                                                    {{ documento.observacoes|truncate(140) }}
+                                                </div>
+
+                                            {% endif %}
+
+                                        </div>
+
+                                    </div>
+
+                                </td>
+
+
+                                <td>
+
+                                    {% if documento.caso %}
+
+                                        <a
+                                            href="{{ url_for(
+                                                'clientes.detalhes',
+                                                cliente_id=documento.caso.cliente.id
+                                            ) }}"
+                                            class="text-decoration-none fw-semibold"
+                                        >
+                                            {{ documento.caso.cliente.nome }}
+                                        </a>
+
+                                        <a
+                                            href="{{ url_for(
+                                                'casos.detalhes',
+                                                caso_id=documento.caso.id
+                                            ) }}"
+                                            class="small text-decoration-none d-block mt-1"
+                                        >
+                                            {{ documento.caso.numero_interno }}
+                                            — {{ documento.caso.titulo }}
+                                        </a>
+
+                                    {% else %}
+
+                                        <span class="text-muted">
+                                            Caso removido
+                                        </span>
+
+                                    {% endif %}
+
+                                </td>
+
+
+                                <td>
+
+                                    {% if (
+                                        documento.caso
+                                        and documento.caso.area_juridica
+                                    ) %}
+
+                                        <span class="badge bg-light text-dark border">
+                                            {{ documento.caso.area_juridica.icone or '⚖' }}
+                                            {{ documento.caso.area_juridica.nome }}
+                                        </span>
+
+                                    {% else %}
+
+                                        <span class="text-muted">
+                                            Não informada
+                                        </span>
+
+                                    {% endif %}
+
+                                </td>
+
+
+                                <td>
+
+                                    {% if documento.usuario %}
+
+                                        {{ documento.usuario.nome }}
+
+                                    {% else %}
+
+                                        <span class="text-muted">
+                                            Usuário removido
+                                        </span>
+
+                                    {% endif %}
+
+                                </td>
+
+
+                                <td class="text-nowrap">
+
+                                    {{ documento.criado_em.strftime('%d/%m/%Y') }}
+
+                                    <small class="text-muted d-block">
+                                        às {{ documento.criado_em.strftime('%H:%M') }}
+                                    </small>
+
+                                </td>
+
+
+                                <td class="text-end">
+
+                                    <div class="d-flex flex-wrap justify-content-end gap-2">
+
+                                        {% if documento.extensao|lower in [
+                                            'pdf',
+                                            'jpg',
+                                            'jpeg',
+                                            'png',
+                                            'webp'
+                                        ] %}
+
+                                            <a
+                                                href="{{ url_for(
+                                                    'documentos_caso.visualizar',
+                                                    documento_id=documento.id
+                                                ) }}"
+                                                class="btn btn-sm btn-outline-secondary"
+                                                target="_blank"
+                                                rel="noopener noreferrer"
+                                            >
+                                                Visualizar
+                                            </a>
+
+                                        {% endif %}
+
+                                        <a
+                                            href="{{ url_for(
+                                                'documentos_caso.download',
+                                                documento_id=documento.id
+                                            ) }}"
+                                            class="btn btn-sm btn-outline-primary"
+                                        >
+                                            Baixar
+                                        </a>
+
+                                        {% if documento.caso %}
+
+                                            <a
+                                                href="{{ url_for(
+                                                    'casos.detalhes',
+                                                    caso_id=documento.caso.id,
+                                                    _anchor='documentos'
+                                                ) }}"
+                                                class="btn btn-sm btn-outline-dark"
+                                            >
+                                                Abrir caso
+                                            </a>
+
+                                        {% endif %}
+
+                                        <form
+                                            method="POST"
+                                            action="{{ url_for(
+                                                'documentos_caso.excluir',
+                                                documento_id=documento.id
+                                            ) }}"
+                                            class="d-inline"
+                                            onsubmit="
+                                                return confirm(
+                                                    'Excluir definitivamente este documento?'
+                                                );
+                                            "
+                                        >
+                                            <button
+                                                type="submit"
+                                                class="btn btn-sm btn-outline-danger"
+                                            >
+                                                Excluir
+                                            </button>
+                                        </form>
+
+                                    </div>
+
+                                </td>
+
+                            </tr>
+
+                        {% endfor %}
+
+                    </tbody>
+
+                </table>
+
+            </div>
+
+        {% else %}
+
+            <div class="text-center border rounded-3 bg-light py-5 px-3">
+
+                <div
+                    class="mb-3"
+                    style="font-size: 2.7rem;"
+                >
+                    📂
+                </div>
+
+                <h6 class="fw-semibold mb-2">
+                    Nenhum documento encontrado
+                </h6>
+
+                <p class="text-muted mb-3">
+                    Altere os filtros ou adicione documentos dentro dos casos.
+                </p>
+
+                <a
+                    href="{{ url_for('documentos.listar') }}"
+                    class="btn btn-primary"
+                >
+                    Limpar filtros
+                </a>
+
+            </div>
+
+        {% endif %}
+
+    </div>
+
+</div>
+
+{% endblock %}

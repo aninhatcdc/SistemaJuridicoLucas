@@ -1,0 +1,339 @@
+{% extends "base.html" %}
+
+{% block title %}Novo Caso{% endblock %}
+
+{% block page_title %}Novo Caso{% endblock %}
+
+{% block page_subtitle %}
+Cadastre um novo serviço jurídico para {{ cliente.nome }}
+{% endblock %}
+
+{% block content %}
+
+<div class="card border-0 shadow-sm mb-4">
+    <div class="card-body p-4">
+
+        <div class="d-flex flex-wrap justify-content-between align-items-center gap-3">
+
+            <div>
+                <span class="text-muted d-block mb-1">
+                    Cliente
+                </span>
+
+                <h4 class="fw-bold mb-1">
+                    {{ cliente.nome }}
+                </h4>
+
+                <p class="text-muted mb-0">
+                    {% if cliente.cpf %}
+                        CPF {{ cliente.cpf }}
+                    {% else %}
+                        CPF não informado
+                    {% endif %}
+                </p>
+            </div>
+
+            <a
+                href="{{ url_for(
+                    'clientes.detalhes',
+                    cliente_id=cliente.id
+                ) }}"
+                class="btn btn-outline-secondary"
+            >
+                Voltar ao cliente
+            </a>
+
+        </div>
+
+    </div>
+</div>
+
+
+<form method="POST">
+
+    <div class="card border-0 shadow-sm mb-4">
+        <div class="card-body p-4">
+
+            <div class="mb-4">
+                <h5 class="fw-semibold mb-1">
+                    Informações principais
+                </h5>
+
+                <p class="text-muted mb-0">
+                    Identifique o serviço jurídico que será prestado.
+                </p>
+            </div>
+
+            <div class="row g-3">
+
+                <div class="col-md-8">
+                    <label for="titulo" class="form-label">
+                        Título do caso *
+                    </label>
+
+                    <input
+                        type="text"
+                        class="form-control"
+                        id="titulo"
+                        name="titulo"
+                        value="{{ dados.get('titulo', '') }}"
+                        placeholder="Ex.: Pedido de aposentadoria por idade"
+                        required
+                        autofocus
+                    >
+                </div>
+
+                <div class="col-md-4">
+                    <label for="prioridade" class="form-label">
+                        Prioridade
+                    </label>
+
+                    {% set prioridade_atual = dados.get(
+                        'prioridade',
+                        'NORMAL'
+                    ) %}
+
+                    <select
+                        class="form-select"
+                        id="prioridade"
+                        name="prioridade"
+                    >
+                        <option
+                            value="BAIXA"
+                            {% if prioridade_atual == 'BAIXA' %}
+                                selected
+                            {% endif %}
+                        >
+                            Baixa
+                        </option>
+
+                        <option
+                            value="NORMAL"
+                            {% if prioridade_atual == 'NORMAL' %}
+                                selected
+                            {% endif %}
+                        >
+                            Normal
+                        </option>
+
+                        <option
+                            value="ALTA"
+                            {% if prioridade_atual == 'ALTA' %}
+                                selected
+                            {% endif %}
+                        >
+                            Alta
+                        </option>
+
+                        <option
+                            value="URGENTE"
+                            {% if prioridade_atual == 'URGENTE' %}
+                                selected
+                            {% endif %}
+                        >
+                            Urgente
+                        </option>
+                    </select>
+                </div>
+
+                <div class="col-md-6">
+                    <label for="area_juridica_id" class="form-label">
+                        Área jurídica *
+                    </label>
+
+                    <select
+                        class="form-select"
+                        id="area_juridica_id"
+                        name="area_juridica_id"
+                        required
+                    >
+                        <option value="">
+                            Selecione a área
+                        </option>
+
+                        {% for area in areas %}
+                            <option
+                                value="{{ area.id }}"
+                                {% if dados.get('area_juridica_id') == area.id %}
+                                    selected
+                                {% endif %}
+                            >
+                                {{ area.icone or '⚖' }}
+                                {{ area.nome }}
+                            </option>
+                        {% endfor %}
+                    </select>
+                </div>
+
+                <div class="col-md-6">
+                    <label for="status_id" class="form-label">
+                        Status inicial *
+                    </label>
+
+                    <select
+                        class="form-select"
+                        id="status_id"
+                        name="status_id"
+                        required
+                    >
+                        <option value="">
+                            Selecione o status
+                        </option>
+
+                        {% for status in status_casos %}
+                            <option
+                                value="{{ status.id }}"
+                                {% if dados.get('status_id') == status.id %}
+                                    selected
+                                {% endif %}
+                            >
+                                {{ status.nome }}
+                            </option>
+                        {% endfor %}
+                    </select>
+                </div>
+
+                <div class="col-md-6">
+                    <label for="responsavel_id" class="form-label">
+                        Responsável
+                    </label>
+
+                    <select
+                        class="form-select"
+                        id="responsavel_id"
+                        name="responsavel_id"
+                    >
+                        <option value="">
+                            Nenhum responsável definido
+                        </option>
+
+                        {% for responsavel in responsaveis %}
+                            <option
+                                value="{{ responsavel.id }}"
+                                {% if dados.get('responsavel_id') == responsavel.id %}
+                                    selected
+                                {% endif %}
+                            >
+                                {{ responsavel.nome }}
+                            </option>
+                        {% endfor %}
+                    </select>
+                </div>
+
+                <div class="col-md-6">
+                    <label for="origem" class="form-label">
+                        Origem do caso
+                    </label>
+
+                    {% set origem_atual = dados.get('origem', '') %}
+
+                    <select
+                        class="form-select"
+                        id="origem"
+                        name="origem"
+                    >
+                        <option value="">
+                            Selecione
+                        </option>
+
+                        {% for opcao in [
+                            "Consulta",
+                            "Indicação",
+                            "Cliente antigo",
+                            "Plantão",
+                            "Parceria",
+                            "Atendimento online",
+                            "Outro"
+                        ] %}
+                            <option
+                                value="{{ opcao }}"
+                                {% if origem_atual == opcao %}
+                                    selected
+                                {% endif %}
+                            >
+                                {{ opcao }}
+                            </option>
+                        {% endfor %}
+                    </select>
+                </div>
+
+            </div>
+
+        </div>
+    </div>
+
+
+    <div class="card border-0 shadow-sm mb-4">
+        <div class="card-body p-4">
+
+            <div class="mb-3">
+                <h5 class="fw-semibold mb-1">
+                    Descrição
+                </h5>
+
+                <p class="text-muted mb-0">
+                    Registre um resumo objetivo da demanda apresentada.
+                </p>
+            </div>
+
+            <textarea
+                class="form-control"
+                id="descricao"
+                name="descricao"
+                rows="5"
+                placeholder="Descreva os fatos principais, o pedido do cliente e as informações iniciais..."
+            >{{ dados.get('descricao', '') }}</textarea>
+
+        </div>
+    </div>
+
+
+    <div class="card border-0 shadow-sm mb-4">
+        <div class="card-body p-4">
+
+            <div class="mb-3">
+                <h5 class="fw-semibold mb-1">
+                    Observações internas
+                </h5>
+
+                <p class="text-muted mb-0">
+                    Anotações destinadas à equipe do escritório.
+                </p>
+            </div>
+
+            <textarea
+                class="form-control"
+                id="observacoes"
+                name="observacoes"
+                rows="4"
+                placeholder="Digite orientações, pendências ou observações internas..."
+            >{{ dados.get('observacoes', '') }}</textarea>
+
+        </div>
+    </div>
+
+
+    <div class="d-flex justify-content-end gap-2 mb-4">
+
+        <a
+            href="{{ url_for(
+                'clientes.detalhes',
+                cliente_id=cliente.id
+            ) }}"
+            class="btn btn-outline-secondary"
+        >
+            Cancelar
+        </a>
+
+        <button
+            type="submit"
+            class="btn btn-primary px-4"
+        >
+            Criar Caso
+        </button>
+
+    </div>
+
+</form>
+
+{% endblock %}

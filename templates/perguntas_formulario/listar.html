@@ -1,0 +1,531 @@
+{% extends "base.html" %}
+
+{% block title %}
+Perguntas do formulário
+{% endblock %}
+
+{% block page_title %}
+Perguntas do formulário
+{% endblock %}
+
+{% block page_subtitle %}
+Organize as perguntas utilizadas em {{ formulario.nome }}.
+{% endblock %}
+
+{% block content %}
+
+<div
+    class="
+        d-flex
+        flex-column
+        flex-lg-row
+        justify-content-between
+        align-items-lg-center
+        gap-3
+        mb-4
+    "
+>
+    <div>
+        <h2 class="mb-1">
+            🧩 Perguntas
+        </h2>
+
+        <p class="text-muted mb-0">
+            <strong>{{ formulario.nome }}</strong>
+
+            {% if formulario.area_juridica %}
+                · {{ formulario.area_juridica.nome }}
+            {% endif %}
+        </p>
+    </div>
+
+    <div class="d-flex flex-wrap gap-2">
+        <a
+            href="{{ url_for(
+                'perguntas_formulario.nova',
+                formulario_id=formulario.id
+            ) }}"
+            class="btn btn-primary"
+        >
+            + Nova pergunta
+        </a>
+
+        <a
+            href="{{ url_for(
+                'formularios.editar',
+                formulario_id=formulario.id
+            ) }}"
+            class="btn btn-outline-secondary"
+        >
+            Voltar ao formulário
+        </a>
+    </div>
+</div>
+
+{% set controle = namespace(etapas=[]) %}
+
+{% for pergunta in perguntas %}
+    {% set chave_etapa = pergunta.ordem_etapa|string ~ '|' ~ pergunta.etapa %}
+
+    {% if chave_etapa not in controle.etapas %}
+        {% set controle.etapas = controle.etapas + [chave_etapa] %}
+    {% endif %}
+{% endfor %}
+
+<div class="card border-0 shadow-sm mb-4">
+    <div class="card-body">
+        <div
+            class="
+                d-flex
+                flex-column
+                flex-md-row
+                justify-content-between
+                align-items-md-center
+                gap-3
+            "
+        >
+            <div>
+                <h5 class="mb-1">
+                    Estrutura do formulário
+                </h5>
+
+                <p class="text-muted small mb-0">
+                    As perguntas estão organizadas por etapas.
+                    As setas alteram a ordem apenas dentro da etapa correspondente.
+                </p>
+            </div>
+
+            <div class="d-flex flex-wrap gap-2">
+                <span class="badge text-bg-primary">
+                    {{ perguntas|length }} pergunta(s)
+                </span>
+
+                <span class="badge text-bg-light border">
+                    {{ controle.etapas|length }} etapa(s)
+                </span>
+
+                {% if formulario.ativo %}
+                    <span class="badge text-bg-success">
+                        Formulário ativo
+                    </span>
+                {% else %}
+                    <span class="badge text-bg-secondary">
+                        Formulário inativo
+                    </span>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+
+{% if perguntas %}
+
+    {% for chave_etapa in controle.etapas %}
+
+        {% set partes_etapa = chave_etapa.split('|', 1) %}
+        {% set ordem_etapa = partes_etapa[0] %}
+        {% set nome_etapa = partes_etapa[1] %}
+        {% set dados_etapa = namespace(
+            icone='📄',
+            descricao=None,
+            quantidade=0
+        ) %}
+
+        {% for pergunta in perguntas %}
+            {% if
+                pergunta.etapa == nome_etapa
+                and pergunta.ordem_etapa|string == ordem_etapa
+            %}
+                {% if dados_etapa.quantidade == 0 %}
+                    {% set dados_etapa.icone = pergunta.icone or '📄' %}
+                    {% set dados_etapa.descricao = pergunta.descricao_etapa %}
+                {% endif %}
+
+                {% set dados_etapa.quantidade = dados_etapa.quantidade + 1 %}
+            {% endif %}
+        {% endfor %}
+
+        <div class="card border-0 shadow-sm mb-4">
+
+            <div class="card-header bg-white border-0 px-4 pt-4 pb-3">
+                <div
+                    class="
+                        d-flex
+                        flex-column
+                        flex-md-row
+                        justify-content-between
+                        align-items-md-start
+                        gap-3
+                    "
+                >
+                    <div class="d-flex align-items-start gap-3">
+                        <div
+                            class="d-flex align-items-center justify-content-center bg-light border rounded-3 flex-shrink-0"
+                            style="
+                                width: 48px;
+                                height: 48px;
+                                font-size: 1.35rem;
+                            "
+                        >
+                            {{ dados_etapa.icone }}
+                        </div>
+
+                        <div>
+                            <div class="d-flex flex-wrap align-items-center gap-2 mb-1">
+                                <span class="badge text-bg-dark">
+                                    Etapa {{ ordem_etapa }}
+                                </span>
+
+                                <h5 class="fw-semibold mb-0">
+                                    {{ nome_etapa }}
+                                </h5>
+                            </div>
+
+                            {% if dados_etapa.descricao %}
+                                <p class="text-muted small mb-0">
+                                    {{ dados_etapa.descricao }}
+                                </p>
+                            {% else %}
+                                <p class="text-muted small mb-0">
+                                    Perguntas agrupadas nesta etapa do formulário.
+                                </p>
+                            {% endif %}
+                        </div>
+                    </div>
+
+                    <span class="badge text-bg-primary">
+                        {{ dados_etapa.quantidade }} pergunta(s)
+                    </span>
+                </div>
+            </div>
+
+            <div class="card-body p-0">
+                <div class="table-responsive">
+
+                    <table class="table table-hover align-middle mb-0">
+
+                        <thead class="table-light">
+                            <tr>
+                                <th class="ps-4">
+                                    Ordem
+                                </th>
+
+                                <th>
+                                    Pergunta
+                                </th>
+
+                                <th>
+                                    Grupo
+                                </th>
+
+                                <th>
+                                    Tipo
+                                </th>
+
+                                <th>
+                                    Obrigatória
+                                </th>
+
+                                <th>
+                                    Status
+                                </th>
+
+                                <th class="text-end pe-4">
+                                    Ações
+                                </th>
+                            </tr>
+                        </thead>
+
+                        <tbody>
+
+                            {% for pergunta in perguntas %}
+
+                                {% if
+                                    pergunta.etapa == nome_etapa
+                                    and pergunta.ordem_etapa|string == ordem_etapa
+                                %}
+
+                                    {% set posicao = namespace(
+                                        primeira=True,
+                                        ultima=True
+                                    ) %}
+
+                                    {% for outra in perguntas %}
+                                        {% if
+                                            outra.etapa == pergunta.etapa
+                                            and outra.ordem_etapa == pergunta.ordem_etapa
+                                            and outra.ordem < pergunta.ordem
+                                        %}
+                                            {% set posicao.primeira = False %}
+                                        {% endif %}
+
+                                        {% if
+                                            outra.etapa == pergunta.etapa
+                                            and outra.ordem_etapa == pergunta.ordem_etapa
+                                            and outra.ordem > pergunta.ordem
+                                        %}
+                                            {% set posicao.ultima = False %}
+                                        {% endif %}
+                                    {% endfor %}
+
+                                    <tr>
+
+                                        <td class="ps-4">
+                                            <div class="d-flex align-items-center gap-2">
+                                                <span class="badge text-bg-light border">
+                                                    {{ pergunta.ordem }}
+                                                </span>
+
+                                                <div class="d-flex gap-1">
+
+                                                    <form
+                                                        method="POST"
+                                                        action="{{ url_for(
+                                                            'perguntas_formulario.mover_cima',
+                                                            formulario_id=formulario.id,
+                                                            pergunta_id=pergunta.id
+                                                        ) }}"
+                                                    >
+                                                        <button
+                                                            type="submit"
+                                                            class="btn btn-sm btn-outline-secondary"
+                                                            title="Mover para cima"
+                                                            {% if posicao.primeira %}
+                                                                disabled
+                                                            {% endif %}
+                                                        >
+                                                            ↑
+                                                        </button>
+                                                    </form>
+
+                                                    <form
+                                                        method="POST"
+                                                        action="{{ url_for(
+                                                            'perguntas_formulario.mover_baixo',
+                                                            formulario_id=formulario.id,
+                                                            pergunta_id=pergunta.id
+                                                        ) }}"
+                                                    >
+                                                        <button
+                                                            type="submit"
+                                                            class="btn btn-sm btn-outline-secondary"
+                                                            title="Mover para baixo"
+                                                            {% if posicao.ultima %}
+                                                                disabled
+                                                            {% endif %}
+                                                        >
+                                                            ↓
+                                                        </button>
+                                                    </form>
+
+                                                </div>
+                                            </div>
+                                        </td>
+
+                                        <td>
+                                            <div class="fw-semibold">
+                                                {{ pergunta.texto }}
+                                            </div>
+
+                                            <div class="text-muted small">
+                                                Código:
+                                                <code>{{ pergunta.codigo }}</code>
+                                            </div>
+
+                                            {% if pergunta.descricao %}
+                                                <div
+                                                    class="text-muted small mt-1"
+                                                    style="max-width: 420px;"
+                                                >
+                                                    {{ pergunta.descricao|truncate(100) }}
+                                                </div>
+                                            {% endif %}
+
+                                            {% if pergunta.aceita_opcoes %}
+                                                <div class="d-flex flex-wrap gap-1 mt-2">
+                                                    {% for opcao in pergunta.opcoes[:4] %}
+                                                        <span class="badge text-bg-light border">
+                                                            {{ opcao }}
+                                                        </span>
+                                                    {% endfor %}
+
+                                                    {% if pergunta.opcoes|length > 4 %}
+                                                        <span class="badge text-bg-secondary">
+                                                            +{{ pergunta.opcoes|length - 4 }}
+                                                        </span>
+                                                    {% endif %}
+                                                </div>
+                                            {% endif %}
+                                        </td>
+
+                                        <td>
+                                            {% if pergunta.grupo %}
+                                                <span class="badge text-bg-light border">
+                                                    {{ pergunta.grupo }}
+                                                </span>
+                                            {% else %}
+                                                <span class="text-muted">
+                                                    —
+                                                </span>
+                                            {% endif %}
+                                        </td>
+
+                                        <td>
+                                            <span class="badge text-bg-light border">
+                                                {{ pergunta.tipo_formatado }}
+                                            </span>
+                                        </td>
+
+                                        <td>
+                                            {% if pergunta.obrigatoria %}
+                                                <span class="badge text-bg-danger">
+                                                    Obrigatória
+                                                </span>
+                                            {% else %}
+                                                <span class="text-muted">
+                                                    Opcional
+                                                </span>
+                                            {% endif %}
+                                        </td>
+
+                                        <td>
+                                            {% if pergunta.ativo %}
+                                                <span class="badge text-bg-success">
+                                                    Ativa
+                                                </span>
+                                            {% else %}
+                                                <span class="badge text-bg-secondary">
+                                                    Inativa
+                                                </span>
+                                            {% endif %}
+                                        </td>
+
+                                        <td class="text-end pe-4">
+                                            <div
+                                                class="
+                                                    d-flex
+                                                    justify-content-end
+                                                    flex-wrap
+                                                    gap-2
+                                                "
+                                            >
+                                                <a
+                                                    href="{{ url_for(
+                                                        'perguntas_formulario.editar',
+                                                        formulario_id=formulario.id,
+                                                        pergunta_id=pergunta.id
+                                                    ) }}"
+                                                    class="btn btn-sm btn-outline-secondary"
+                                                    title="Editar pergunta"
+                                                >
+                                                    ✏️
+                                                </a>
+
+                                                <form
+                                                    method="POST"
+                                                    action="{{ url_for(
+                                                        'perguntas_formulario.alternar_status',
+                                                        formulario_id=formulario.id,
+                                                        pergunta_id=pergunta.id
+                                                    ) }}"
+                                                >
+                                                    <button
+                                                        type="submit"
+                                                        class="
+                                                            btn
+                                                            btn-sm
+                                                            {% if pergunta.ativo %}
+                                                                btn-outline-warning
+                                                            {% else %}
+                                                                btn-outline-success
+                                                            {% endif %}
+                                                        "
+                                                        title="
+                                                            {% if pergunta.ativo %}
+                                                                Desativar pergunta
+                                                            {% else %}
+                                                                Ativar pergunta
+                                                            {% endif %}
+                                                        "
+                                                    >
+                                                        {% if pergunta.ativo %}
+                                                            ⏸️
+                                                        {% else %}
+                                                            ▶️
+                                                        {% endif %}
+                                                    </button>
+                                                </form>
+
+                                                <form
+                                                    method="POST"
+                                                    action="{{ url_for(
+                                                        'perguntas_formulario.excluir',
+                                                        formulario_id=formulario.id,
+                                                        pergunta_id=pergunta.id
+                                                    ) }}"
+                                                    onsubmit="
+                                                        return confirm(
+                                                            'Tem certeza que deseja excluir esta pergunta?'
+                                                        );
+                                                    "
+                                                >
+                                                    <button
+                                                        type="submit"
+                                                        class="btn btn-sm btn-outline-danger"
+                                                        title="Excluir pergunta"
+                                                    >
+                                                        🗑️
+                                                    </button>
+                                                </form>
+                                            </div>
+                                        </td>
+
+                                    </tr>
+
+                                {% endif %}
+
+                            {% endfor %}
+
+                        </tbody>
+
+                    </table>
+
+                </div>
+            </div>
+
+        </div>
+
+    {% endfor %}
+
+{% else %}
+
+    <div class="card border-0 shadow-sm">
+        <div class="card-body text-center py-5 px-3">
+            <div class="display-5 mb-3">
+                🧩
+            </div>
+
+            <h5>
+                Nenhuma pergunta cadastrada
+            </h5>
+
+            <p class="text-muted mb-4">
+                Adicione as perguntas e organize cada uma em uma etapa
+                do formulário.
+            </p>
+
+            <a
+                href="{{ url_for(
+                    'perguntas_formulario.nova',
+                    formulario_id=formulario.id
+                ) }}"
+                class="btn btn-primary"
+            >
+                + Cadastrar primeira pergunta
+            </a>
+        </div>
+    </div>
+
+{% endif %}
+
+{% endblock %}

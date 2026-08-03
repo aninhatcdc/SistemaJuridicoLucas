@@ -1,0 +1,201 @@
+{% extends "base.html" %}
+
+{% block title %}
+Formulários do caso
+{% endblock %}
+
+{% block page_title %}
+Formulários do caso
+{% endblock %}
+
+{% block page_subtitle %}
+{{ caso.numero_interno }} — {{ caso.titulo }}
+{% endblock %}
+
+{% block content %}
+
+<div class="d-flex flex-wrap justify-content-between align-items-center gap-3 mb-4">
+
+    <div>
+
+        <h3 class="fw-bold mb-1">
+            📋 Formulários
+        </h3>
+
+        <p class="text-muted mb-0">
+            Cliente:
+            <strong>{{ caso.cliente.nome }}</strong>
+        </p>
+
+    </div>
+
+    <div class="d-flex flex-wrap gap-2">
+
+        <a
+            href="{{ url_for(
+                'casos.detalhes',
+                caso_id=caso.id
+            ) }}#formularios"
+            class="btn btn-outline-secondary"
+        >
+            Voltar ao caso
+        </a>
+
+        <a
+            href="{{ url_for(
+                'formularios_caso.selecionar',
+                caso_id=caso.id
+            ) }}"
+            class="btn btn-primary"
+        >
+            + Iniciar formulário
+        </a>
+
+    </div>
+
+</div>
+
+<div class="card border-0 shadow-sm">
+    <div class="card-body p-0">
+
+        {% if formularios %}
+
+            <div class="table-responsive">
+
+                <table class="table table-hover align-middle mb-0">
+
+                    <thead class="table-light">
+
+                        <tr>
+                            <th class="ps-4">Formulário</th>
+                            <th>Status</th>
+                            <th>Responsável</th>
+                            <th>Respostas</th>
+                            <th>Iniciado em</th>
+                            <th class="text-end pe-4">Ações</th>
+                        </tr>
+
+                    </thead>
+
+                    <tbody>
+
+                        {% for formulario in formularios %}
+
+                            <tr>
+
+                                <td class="ps-4">
+
+                                    <div class="fw-semibold">
+                                        {{ formulario.titulo }}
+                                    </div>
+
+                                    <small class="text-muted">
+                                        Versão {{ formulario.versao_modelo }}
+                                    </small>
+
+                                </td>
+
+                                <td>
+
+                                    <span class="badge {{ formulario.status_classe }}">
+                                        {{ formulario.status_formatado }}
+                                    </span>
+
+                                </td>
+
+                                <td>
+                                    {{ formulario.usuario.nome if formulario.usuario else 'Não definido' }}
+                                </td>
+
+                                <td>
+                                    {{ formulario.quantidade_respostas }}
+                                </td>
+
+                                <td class="text-nowrap">
+
+                                    {{ formulario.iniciado_em.strftime('%d/%m/%Y') }}
+
+                                    <small class="text-muted d-block">
+                                        às {{ formulario.iniciado_em.strftime('%H:%M') }}
+                                    </small>
+
+                                </td>
+
+                                <td class="text-end pe-4">
+
+                                    <div class="d-flex flex-wrap justify-content-end gap-2">
+
+                                        {% if formulario.status == "RASCUNHO" %}
+
+                                            <a
+                                                href="{{ url_for(
+                                                    'formularios_caso.preencher',
+                                                    caso_id=caso.id,
+                                                    formulario_caso_id=formulario.id
+                                                ) }}"
+                                                class="btn btn-sm btn-primary"
+                                            >
+                                                Continuar
+                                            </a>
+
+                                        {% endif %}
+
+                                        <a
+                                            href="{{ url_for(
+                                                'formularios_caso.visualizar',
+                                                caso_id=caso.id,
+                                                formulario_caso_id=formulario.id
+                                            ) }}"
+                                            class="btn btn-sm btn-outline-secondary"
+                                        >
+                                            Visualizar
+                                        </a>
+
+                                    </div>
+
+                                </td>
+
+                            </tr>
+
+                        {% endfor %}
+
+                    </tbody>
+
+                </table>
+
+            </div>
+
+        {% else %}
+
+            <div class="text-center py-5 px-3">
+
+                <div class="display-5 mb-3">
+                    📋
+                </div>
+
+                <h5>
+                    Nenhum formulário iniciado
+                </h5>
+
+                <p class="text-muted mb-4">
+                    Escolha um modelo para iniciar o primeiro preenchimento.
+                </p>
+
+                <a
+                    href="{{ url_for(
+                        'formularios_caso.selecionar',
+                        caso_id=caso.id
+                    ) }}"
+                    class="btn btn-primary"
+                >
+                    Iniciar primeiro formulário
+                </a>
+
+            </div>
+
+        {% endif %}
+
+    </div>
+</div>
+
+{% endblock %}

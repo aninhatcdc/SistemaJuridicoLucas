@@ -1,0 +1,2153 @@
+{% extends "base.html" %}
+
+{% block title %}{{ caso.numero_interno }}{% endblock %}
+
+{% block page_title %}{{ caso.numero_interno }}{% endblock %}
+
+{% block page_subtitle %}
+    {{ caso.titulo }}
+{% endblock %}
+
+{% block content %}
+
+<div class="d-flex flex-wrap justify-content-between align-items-center gap-3 mb-4">
+
+    <div>
+
+        <div class="d-flex flex-wrap align-items-center gap-2 mb-2">
+
+            <span class="badge bg-dark">
+                {{ caso.numero_interno }}
+            </span>
+
+            {% if caso.status %}
+                <span
+                    class="badge"
+                    style="
+                        background-color:
+                        {{ caso.status.cor or '#6c757d' }};
+                    "
+                >
+                    {{ caso.status.nome }}
+                </span>
+            {% endif %}
+
+            {% if caso.prioridade == "URGENTE" %}
+
+                <span class="badge bg-danger">
+                    Urgente
+                </span>
+
+            {% elif caso.prioridade == "ALTA" %}
+
+                <span class="badge bg-warning text-dark">
+                    Alta
+                </span>
+
+            {% elif caso.prioridade == "BAIXA" %}
+
+                <span class="badge bg-light text-dark border">
+                    Baixa
+                </span>
+
+            {% else %}
+
+                <span class="badge bg-primary">
+                    Normal
+                </span>
+
+            {% endif %}
+
+        </div>
+
+        <h3 class="fw-bold mb-1">
+            {{ caso.titulo }}
+        </h3>
+
+        <p class="text-muted mb-0">
+
+            Cliente:
+
+            <a
+                href="{{ url_for(
+                    'clientes.detalhes',
+                    cliente_id=caso.cliente.id
+                ) }}"
+                class="text-decoration-none fw-semibold"
+            >
+                {{ caso.cliente.nome }}
+            </a>
+
+        </p>
+
+    </div>
+
+    <div class="d-flex flex-wrap gap-2">
+
+        <a
+            href="{{ url_for('casos.listar') }}"
+            class="btn btn-outline-secondary"
+        >
+            Voltar
+        </a>
+
+        <a
+            href="{{ url_for(
+                'clientes.detalhes',
+                cliente_id=caso.cliente.id
+            ) }}"
+            class="btn btn-outline-primary"
+        >
+            Ver cliente
+        </a>
+
+        <a
+            href="{{ url_for(
+                'casos.editar',
+                caso_id=caso.id
+            ) }}"
+            class="btn btn-warning"
+        >
+            Editar Caso
+        </a>
+
+    </div>
+
+</div>
+
+
+<div class="row g-4 mb-4">
+
+    <div class="col-md-3">
+
+        <div class="card border-0 shadow-sm h-100">
+
+            <div class="card-body p-4">
+
+                <p class="text-muted mb-2">
+                    Área jurídica
+                </p>
+
+                <h5 class="fw-semibold mb-0">
+
+                    {% if caso.area_juridica %}
+
+                        {{ caso.area_juridica.icone or '⚖' }}
+                        {{ caso.area_juridica.nome }}
+
+                    {% else %}
+
+                        Não informada
+
+                    {% endif %}
+
+                </h5>
+
+            </div>
+
+        </div>
+
+    </div>
+
+
+    <div class="col-md-3">
+
+        <div class="card border-0 shadow-sm h-100">
+
+            <div class="card-body p-4">
+
+                <p class="text-muted mb-2">
+                    Responsável
+                </p>
+
+                <h5 class="fw-semibold mb-0">
+
+                    {% if caso.responsavel %}
+
+                        {{ caso.responsavel.nome }}
+
+                    {% else %}
+
+                        Não definido
+
+                    {% endif %}
+
+                </h5>
+
+            </div>
+
+        </div>
+
+    </div>
+
+
+    <div class="col-md-3">
+
+        <div class="card border-0 shadow-sm h-100">
+
+            <div class="card-body p-4">
+
+                <p class="text-muted mb-2">
+                    Data de abertura
+                </p>
+
+                <h5 class="fw-semibold mb-0">
+                    {{ caso.data_abertura.strftime('%d/%m/%Y') }}
+                </h5>
+
+            </div>
+
+        </div>
+
+    </div>
+
+
+    <div class="col-md-3">
+
+        <div class="card border-0 shadow-sm h-100">
+
+            <div class="card-body p-4">
+
+                <p class="text-muted mb-2">
+                    Dias em aberto
+                </p>
+
+                <h5 class="fw-semibold mb-0">
+                    {{ caso.dias_aberto }}
+                </h5>
+
+            </div>
+
+        </div>
+
+    </div>
+
+</div>
+
+
+{% if honorario %}
+
+<div class="row g-3 mb-4">
+
+    <div class="col-md-4">
+        <div class="card border-0 shadow-sm h-100">
+            <div class="card-body p-4">
+                <p class="text-muted mb-2">Valor contratado</p>
+                <h4 class="fw-bold mb-0">
+                    {{ honorario.valor_total_formatado }}
+                </h4>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-md-4">
+        <div class="card border-0 shadow-sm h-100">
+            <div class="card-body p-4">
+                <p class="text-muted mb-2">Total recebido</p>
+                <h4 class="fw-bold text-success mb-0">
+                    {{ honorario.total_pago_formatado }}
+                </h4>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-md-4">
+        <div class="card border-0 shadow-sm h-100">
+            <div class="card-body p-4">
+                <p class="text-muted mb-2">Saldo pendente</p>
+                <h4 class="fw-bold text-danger mb-0">
+                    {{ honorario.saldo_pendente_formatado }}
+                </h4>
+            </div>
+        </div>
+    </div>
+
+</div>
+
+{% endif %}
+
+<div class="row g-4 mb-4">
+
+    <div class="col-lg-8">
+
+        <div class="card border-0 shadow-sm h-100">
+
+            <div class="card-body p-4">
+
+                <div class="mb-4">
+
+                    <h5 class="fw-semibold mb-1">
+                        Descrição da demanda
+                    </h5>
+
+                    <p class="text-muted mb-0">
+                        Resumo do serviço jurídico contratado.
+                    </p>
+
+                </div>
+
+                {% if caso.descricao %}
+
+                    <p
+                        class="mb-0"
+                        style="white-space: pre-line;"
+                    >{{ caso.descricao }}</p>
+
+                {% else %}
+
+                    <p class="text-muted mb-0">
+                        Nenhuma descrição cadastrada.
+                    </p>
+
+                {% endif %}
+
+            </div>
+
+        </div>
+
+    </div>
+
+
+    <div class="col-lg-4">
+
+        <div class="card border-0 shadow-sm h-100">
+
+            <div class="card-body p-4">
+
+                <div class="mb-4">
+
+                    <h5 class="fw-semibold mb-1">
+                        Informações complementares
+                    </h5>
+
+                </div>
+
+                <div class="mb-3">
+
+                    <small class="text-muted d-block">
+                        Origem do caso
+                    </small>
+
+                    <strong>
+                        {{ caso.origem or "Não informada" }}
+                    </strong>
+
+                </div>
+
+                <div class="mb-3">
+
+                    <small class="text-muted d-block">
+                        Criado em
+                    </small>
+
+                    <strong>
+                        {{ caso.criado_em.strftime('%d/%m/%Y às %H:%M') }}
+                    </strong>
+
+                </div>
+
+                <div>
+
+                    <small class="text-muted d-block">
+                        Última atualização
+                    </small>
+
+                    <strong>
+                        {{ caso.atualizado_em.strftime('%d/%m/%Y às %H:%M') }}
+                    </strong>
+
+                </div>
+
+            </div>
+
+        </div>
+
+    </div>
+
+</div>
+
+
+<div class="card border-0 shadow-sm mb-4">
+
+    <div class="card-body p-4">
+
+        <div class="mb-4">
+
+            <h5 class="fw-semibold mb-1">
+                Observações internas
+            </h5>
+
+            <p class="text-muted mb-0">
+                Anotações da equipe sobre o caso.
+            </p>
+
+        </div>
+
+        {% if caso.observacoes %}
+
+            <p
+                class="mb-0"
+                style="white-space: pre-line;"
+            >{{ caso.observacoes }}</p>
+
+        {% else %}
+
+            <p class="text-muted mb-0">
+                Nenhuma observação interna cadastrada.
+            </p>
+
+        {% endif %}
+
+    </div>
+
+</div>
+
+
+<div class="card border-0 shadow-sm mb-4">
+
+    <div class="card-body p-4">
+
+        <div class="d-flex flex-wrap justify-content-between align-items-center gap-3 mb-4">
+
+            <div>
+
+                <div class="d-flex align-items-center gap-2 mb-1">
+
+                    <span style="font-size: 1.5rem;">
+                        🗂️
+                    </span>
+
+                    <h5 class="fw-semibold mb-0">
+                        Área de trabalho do caso
+                    </h5>
+
+                </div>
+
+                <p class="text-muted mb-0">
+                    Acesso rápido aos módulos e informações vinculadas a este caso.
+                </p>
+
+            </div>
+
+            <div class="d-flex flex-wrap gap-2">
+
+                <a
+                    href="{{ url_for(
+                        'atendimentos.novo',
+                        caso_id=caso.id
+                    ) }}"
+                    class="btn btn-outline-primary"
+                >
+                    + Novo atendimento
+                </a>
+
+                <a
+                    href="{{ url_for(
+                        'formularios_caso.selecionar',
+                        caso_id=caso.id
+                    ) }}"
+                    class="btn btn-primary"
+                >
+                    + Iniciar formulário
+                </a>
+
+            </div>
+
+        </div>
+
+
+        <div class="row g-3">
+
+            <div class="col-xl-4 col-md-6">
+
+                <div class="border rounded-3 p-4 h-100">
+
+                    <div class="d-flex justify-content-between align-items-start gap-3 mb-3">
+
+                        <div style="font-size: 1.8rem;">
+                            ⚖
+                        </div>
+
+                        <span class="badge bg-primary rounded-pill">
+                            {{ processos|length }}
+                        </span>
+
+                    </div>
+
+                    <h6 class="fw-semibold mb-2">
+                        Processos
+                    </h6>
+
+                    <p class="text-muted small mb-3">
+                        Processos judiciais e administrativos vinculados ao caso.
+                    </p>
+
+                    <div class="row g-2 mb-3">
+
+                        <div class="col-6">
+
+                            <div class="bg-light border rounded-3 p-3 h-100">
+
+                                <small class="text-muted d-block">
+                                    Cadastrados
+                                </small>
+
+                                <strong class="fs-5">
+                                    {{ processos|length }}
+                                </strong>
+
+                            </div>
+
+                        </div>
+
+                        <div class="col-6">
+
+                            <div class="bg-light border rounded-3 p-3 h-100">
+
+                                <small class="text-muted d-block">
+                                    Com número CNJ
+                                </small>
+
+                                <strong class="fs-5">
+                                    {{
+                                        processos
+                                        | selectattr('numero_cnj')
+                                        | list
+                                        | length
+                                    }}
+                                </strong>
+
+                            </div>
+
+                        </div>
+
+                    </div>
+
+                    <div class="d-flex flex-wrap gap-2">
+
+                        <a
+                            href="#processos"
+                            class="btn btn-sm btn-outline-primary"
+                        >
+                            Ver processos
+                        </a>
+
+                        <a
+                            href="{{ url_for(
+                                'processos.novo',
+                                caso_id=caso.id
+                            ) }}"
+                            class="btn btn-sm btn-primary"
+                        >
+                            + Adicionar
+                        </a>
+
+                    </div>
+
+                </div>
+
+            </div>
+
+
+            <div class="col-xl-4 col-md-6">
+
+                <div class="border rounded-3 p-4 h-100">
+
+                    <div class="d-flex justify-content-between align-items-start gap-3 mb-3">
+
+                        <div style="font-size: 1.8rem;">
+                            📄
+                        </div>
+
+                        <span class="badge bg-primary rounded-pill">
+                            {{ documentos|length }}
+                        </span>
+
+                    </div>
+
+                    <h6 class="fw-semibold mb-2">
+                        Documentos
+                    </h6>
+
+                    <p class="text-muted small mb-3">
+                        Arquivos enviados e documentos gerados automaticamente.
+                    </p>
+
+                    <div class="row g-2 mb-3">
+
+                        <div class="col-6">
+
+                            <div class="bg-light border rounded-3 p-3 h-100">
+
+                                <small class="text-muted d-block">
+                                    Total
+                                </small>
+
+                                <strong class="fs-5">
+                                    {{ documentos|length }}
+                                </strong>
+
+                            </div>
+
+                        </div>
+
+                        <div class="col-6">
+
+                            <div class="bg-light border rounded-3 p-3 h-100">
+
+                                <small class="text-muted d-block">
+                                    PDFs
+                                </small>
+
+                                <strong class="fs-5">
+                                    {{
+                                        documentos
+                                        | selectattr(
+                                            'extensao',
+                                            'equalto',
+                                            'pdf'
+                                        )
+                                        | list
+                                        | length
+                                    }}
+                                </strong>
+
+                            </div>
+
+                        </div>
+
+                    </div>
+
+                    <div class="d-flex flex-wrap gap-2">
+
+                        <a
+                            href="#documentos"
+                            class="btn btn-sm btn-outline-primary"
+                        >
+                            Ver documentos
+                        </a>
+
+                        <button
+                            type="button"
+                            class="btn btn-sm btn-primary"
+                            data-bs-toggle="collapse"
+                            data-bs-target="#formularioDocumento"
+                        >
+                            + Enviar
+                        </button>
+
+                    </div>
+
+                </div>
+
+            </div>
+
+
+            <div class="col-xl-4 col-md-6">
+
+                <div class="border rounded-3 p-4 h-100">
+
+                    <div class="d-flex justify-content-between align-items-start gap-3 mb-3">
+
+                        <div style="font-size: 1.8rem;">
+                            R$
+                        </div>
+
+                        {% if honorario %}
+
+                            {% if honorario.status == "QUITADO" %}
+
+                                <span class="badge bg-primary">
+                                    Quitado
+                                </span>
+
+                            {% elif honorario.status == "SUSPENSO" %}
+
+                                <span class="badge bg-warning text-dark">
+                                    Suspenso
+                                </span>
+
+                            {% elif honorario.status == "CANCELADO" %}
+
+                                <span class="badge bg-secondary">
+                                    Cancelado
+                                </span>
+
+                            {% else %}
+
+                                <span class="badge bg-success">
+                                    Ativo
+                                </span>
+
+                            {% endif %}
+
+                        {% else %}
+
+                            <span class="badge bg-secondary">
+                                Não cadastrado
+                            </span>
+
+                        {% endif %}
+
+                    </div>
+
+                    <h6 class="fw-semibold mb-2">
+                        Honorários
+                    </h6>
+
+                    {% if honorario %}
+
+                        <div class="row g-2 mb-3">
+
+                            <div class="col-6">
+
+                                <div class="bg-light border rounded-3 p-3 h-100">
+
+                                    <small class="text-muted d-block">
+                                        Contratado
+                                    </small>
+
+                                    <strong>
+                                        {{ honorario.valor_total_formatado }}
+                                    </strong>
+
+                                </div>
+
+                            </div>
+
+                            <div class="col-6">
+
+                                <div class="bg-light border rounded-3 p-3 h-100">
+
+                                    <small class="text-muted d-block">
+                                        Entrada
+                                    </small>
+
+                                    <strong class="text-success">
+                                        {{ honorario.valor_entrada_formatado }}
+                                    </strong>
+
+                                </div>
+
+                            </div>
+
+                            <div class="col-6">
+
+                                <div class="bg-light border rounded-3 p-3 h-100">
+
+                                    <small class="text-muted d-block">
+                                        Parcelas pagas
+                                    </small>
+
+                                    <strong class="text-success">
+                                        {{ honorario.total_pago_formatado }}
+                                    </strong>
+
+                                </div>
+
+                            </div>
+
+                            <div class="col-6">
+
+                                <div class="bg-light border rounded-3 p-3 h-100">
+
+                                    <small class="text-muted d-block">
+                                        Saldo pendente
+                                    </small>
+
+                                    <strong class="text-danger">
+                                        {{ honorario.saldo_pendente_formatado }}
+                                    </strong>
+
+                                </div>
+
+                            </div>
+
+                        </div>
+
+                        <div class="d-flex flex-wrap gap-2">
+
+                            <a
+                                href="{{ url_for(
+                                    'honorarios.detalhes',
+                                    honorario_id=honorario.id
+                                ) }}"
+                                class="btn btn-sm btn-outline-success"
+                            >
+                                Abrir honorários
+                            </a>
+
+                            <a
+                                href="{{ url_for(
+                                    'cobrancas.listar',
+                                    cliente_id=caso.cliente.id
+                                ) }}"
+                                class="btn btn-sm btn-outline-primary"
+                            >
+                                Ver cobranças
+                            </a>
+
+                        </div>
+
+                    {% else %}
+
+                        <p class="text-muted small mb-3">
+                            Cadastre o contrato, gere parcelas e acompanhe os pagamentos.
+                        </p>
+
+                        <a
+                            href="{{ url_for(
+                                'honorarios.novo',
+                                caso_id=caso.id
+                            ) }}"
+                            class="btn btn-sm btn-success"
+                        >
+                            + Novo contrato
+                        </a>
+
+                    {% endif %}
+
+                </div>
+
+            </div>
+
+
+            <div class="col-xl-3 col-md-6">
+
+                <div class="border rounded-3 p-4 h-100">
+
+                    <div class="d-flex justify-content-between align-items-start gap-3 mb-3">
+
+                        <div style="font-size: 1.8rem;">
+                            📋
+                        </div>
+
+                        <span class="badge bg-primary rounded-pill">
+                            {{ formularios_caso|length }}
+                        </span>
+
+                    </div>
+
+                    <h6 class="fw-semibold mb-2">
+                        Formulários
+                    </h6>
+
+                    <p class="text-muted small mb-3">
+                        Entrevistas, fichas e formulários preenchidos.
+                    </p>
+
+                    <div class="d-flex flex-wrap gap-2">
+
+                        <a
+                            href="#formularios"
+                            class="btn btn-sm btn-outline-primary"
+                        >
+                            Ver formulários
+                        </a>
+
+                        <a
+                            href="{{ url_for(
+                                'formularios_caso.selecionar',
+                                caso_id=caso.id
+                            ) }}"
+                            class="btn btn-sm btn-primary"
+                        >
+                            + Iniciar
+                        </a>
+
+                    </div>
+
+                </div>
+
+            </div>
+
+
+            <div class="col-xl-3 col-md-6">
+
+                <div class="border rounded-3 p-4 h-100">
+
+                    <div class="d-flex justify-content-between align-items-start gap-3 mb-3">
+
+                        <div style="font-size: 1.8rem;">
+                            ☎
+                        </div>
+
+                        <span class="badge bg-primary rounded-pill">
+                            {{ atendimentos|length }}
+                        </span>
+
+                    </div>
+
+                    <h6 class="fw-semibold mb-2">
+                        Atendimentos
+                    </h6>
+
+                    <p class="text-muted small mb-3">
+                        Consultas, reuniões, ligações e orientações registradas.
+                    </p>
+
+                    <div class="d-flex flex-wrap gap-2">
+
+                        <a
+                            href="#atendimentos"
+                            class="btn btn-sm btn-outline-primary"
+                        >
+                            Ver atendimentos
+                        </a>
+
+                        <a
+                            href="{{ url_for(
+                                'atendimentos.novo',
+                                caso_id=caso.id
+                            ) }}"
+                            class="btn btn-sm btn-primary"
+                        >
+                            + Registrar
+                        </a>
+
+                    </div>
+
+                </div>
+
+            </div>
+
+
+            <div class="col-xl-3 col-md-6">
+
+                <div class="border rounded-3 p-4 h-100">
+
+                    <div class="mb-3" style="font-size: 1.8rem;">
+                        📅
+                    </div>
+
+                    <h6 class="fw-semibold mb-2">
+                        Agenda
+                    </h6>
+
+                    <p class="text-muted small mb-3">
+                        Prazos, audiências e compromissos vinculados ao caso.
+                    </p>
+
+                    <a
+                        href="{{ url_for('agenda.listar_eventos') }}"
+                        class="btn btn-sm btn-outline-primary"
+                    >
+                        Abrir agenda
+                    </a>
+
+                </div>
+
+            </div>
+
+
+
+        </div>
+
+    </div>
+
+</div>
+
+
+<div
+    class="card border-0 shadow-sm mb-4"
+    id="formularios"
+>
+
+    <div class="card-header bg-white border-0 px-4 pt-4 pb-0">
+
+        <div class="d-flex flex-wrap justify-content-between align-items-center gap-3">
+
+            <div>
+
+                <div class="d-flex align-items-center gap-2 mb-1">
+
+                    <span style="font-size: 1.5rem;">
+                        📋
+                    </span>
+
+                    <h5 class="fw-semibold mb-0">
+                        Formulários do caso
+                    </h5>
+
+                    <span class="badge bg-primary rounded-pill">
+                        {{ formularios_caso|length }}
+                    </span>
+
+                </div>
+
+                <p class="text-muted mb-0">
+                    Fichas, entrevistas, checklists e formulários
+                    preenchidos para este caso.
+                </p>
+
+            </div>
+
+            <div class="d-flex flex-wrap gap-2">
+
+                <a
+                    href="{{ url_for(
+                        'formularios_caso.listar',
+                        caso_id=caso.id
+                    ) }}"
+                    class="btn btn-outline-primary"
+                >
+                    Ver todos
+                </a>
+
+                <a
+                    href="{{ url_for(
+                        'formularios_caso.selecionar',
+                        caso_id=caso.id
+                    ) }}"
+                    class="btn btn-primary"
+                >
+                    + Iniciar formulário
+                </a>
+
+            </div>
+
+        </div>
+
+    </div>
+
+    <div class="card-body p-4">
+
+        {% if formularios_caso %}
+
+            <div class="table-responsive">
+
+                <table class="table align-middle mb-0">
+
+                    <thead class="table-light">
+
+                        <tr>
+                            <th>Formulário</th>
+                            <th>Status</th>
+                            <th>Responsável</th>
+                            <th>Atualização</th>
+                            <th class="text-end">Ações</th>
+                        </tr>
+
+                    </thead>
+
+                    <tbody>
+
+                        {% for formulario in formularios_caso[:5] %}
+
+                            <tr>
+
+                                <td>
+
+                                    <div class="fw-semibold">
+                                        {{ formulario.titulo }}
+                                    </div>
+
+                                    <small class="text-muted">
+                                        {{ formulario.quantidade_respostas }}
+                                        resposta(s)
+                                        · versão
+                                        {{ formulario.versao_modelo }}
+                                    </small>
+
+                                </td>
+
+                                <td>
+
+                                    <span class="badge {{ formulario.status_classe }}">
+                                        {{ formulario.status_formatado }}
+                                    </span>
+
+                                </td>
+
+                                <td>
+                                    {{ formulario.usuario.nome if formulario.usuario else 'Não definido' }}
+                                </td>
+
+                                <td class="text-nowrap">
+
+                                    {{ formulario.atualizado_em.strftime('%d/%m/%Y') }}
+
+                                    <small class="text-muted d-block">
+                                        às {{ formulario.atualizado_em.strftime('%H:%M') }}
+                                    </small>
+
+                                </td>
+
+                                <td class="text-end">
+
+                                    <div class="d-flex flex-wrap justify-content-end gap-2">
+
+                                        {% if formulario.status == "RASCUNHO" %}
+
+                                            <a
+                                                href="{{ url_for(
+                                                    'formularios_caso.preencher',
+                                                    caso_id=caso.id,
+                                                    formulario_caso_id=formulario.id
+                                                ) }}"
+                                                class="btn btn-sm btn-primary"
+                                            >
+                                                Continuar
+                                            </a>
+
+                                        {% endif %}
+
+                                        <a
+                                            href="{{ url_for(
+                                                'formularios_caso.visualizar',
+                                                caso_id=caso.id,
+                                                formulario_caso_id=formulario.id
+                                            ) }}"
+                                            class="btn btn-sm btn-outline-secondary"
+                                        >
+                                            Visualizar
+                                        </a>
+
+                                    </div>
+
+                                </td>
+
+                            </tr>
+
+                        {% endfor %}
+
+                    </tbody>
+
+                </table>
+
+            </div>
+
+            {% if formularios_caso|length > 5 %}
+
+                <div class="text-center border-top pt-3 mt-3">
+
+                    <a
+                        href="{{ url_for(
+                            'formularios_caso.listar',
+                            caso_id=caso.id
+                        ) }}"
+                        class="text-decoration-none"
+                    >
+                        Ver todos os
+                        {{ formularios_caso|length }}
+                        formulários
+                    </a>
+
+                </div>
+
+            {% endif %}
+
+        {% else %}
+
+            <div class="text-center border rounded-3 bg-light py-5 px-3">
+
+                <div
+                    class="mb-3"
+                    style="font-size: 2.5rem;"
+                >
+                    📋
+                </div>
+
+                <h6 class="fw-semibold mb-2">
+                    Nenhum formulário iniciado
+                </h6>
+
+                <p class="text-muted mb-3">
+                    Preencha fichas jurídicas, entrevistas, checklists
+                    e outros formulários vinculados ao caso.
+                </p>
+
+                <a
+                    href="{{ url_for(
+                        'formularios_caso.selecionar',
+                        caso_id=caso.id
+                    ) }}"
+                    class="btn btn-primary"
+                >
+                    Iniciar primeiro formulário
+                </a>
+
+            </div>
+
+        {% endif %}
+
+    </div>
+
+</div>
+
+
+<div
+    class="card border-0 shadow-sm mb-4"
+    id="processos"
+>
+    <div class="card-header bg-white border-0 px-4 pt-4 pb-0">
+        <div class="d-flex flex-wrap justify-content-between align-items-center gap-3">
+            <div>
+                <div class="d-flex align-items-center gap-2 mb-1">
+                    <span style="font-size:1.5rem;">⚖</span>
+                    <h5 class="fw-semibold mb-0">Processos do caso</h5>
+                    <span class="badge bg-primary rounded-pill">{{ processos|length }}</span>
+                </div>
+                <p class="text-muted mb-0">Processos judiciais e administrativos vinculados a este caso.</p>
+            </div>
+            <a href="{{ url_for('processos.novo', caso_id=caso.id) }}" class="btn btn-primary">
+                + Adicionar processo
+            </a>
+        </div>
+    </div>
+    <div class="card-body p-4">
+        {% if processos %}
+        <div class="table-responsive">
+            <table class="table align-middle">
+                <thead class="table-light">
+                <tr>
+                    <th>Processo</th>
+                    <th>Tribunal</th>
+                    <th>Situação</th>
+                    <th>Valor</th>
+                    <th class="text-end">Ações</th>
+                </tr>
+                </thead>
+                <tbody>
+                {% for processo in processos %}
+                <tr>
+                    <td>
+                        <div class="fw-semibold">{{ processo.numero_cnj or 'Processo sem número' }}</div>
+                        {% if processo.classe_processual %}<small class="text-muted d-block">{{ processo.classe_processual }}</small>{% endif %}
+                        {% if processo.assunto %}<small class="text-muted d-block">{{ processo.assunto }}</small>{% endif %}
+                    </td>
+                    <td>
+                        {{ processo.tribunal or 'Não informado' }}<br>
+                        <small class="text-muted">{{ processo.comarca or '' }} {{ processo.vara or '' }}</small>
+                    </td>
+                    <td><span class="badge bg-primary">{{ processo.situacao_formatada }}</span></td>
+                    <td>{{ processo.valor_causa_formatado }}</td>
+                    <td class="text-end">
+                        <a href="{{ url_for('processos.editar', processo_id=processo.id) }}" class="btn btn-sm btn-outline-primary">Editar</a>
+                        <form method="POST" action="{{ url_for('processos.excluir', processo_id=processo.id) }}" class="d-inline" onsubmit="return confirm('Excluir este processo?');">
+                            <button class="btn btn-sm btn-outline-danger">Excluir</button>
+                        </form>
+                    </td>
+                </tr>
+                {% endfor %}
+                </tbody>
+            </table>
+        </div>
+        {% else %}
+        <div class="text-center border rounded-3 bg-light py-5">
+            <h6>Nenhum processo cadastrado</h6>
+            <a href="{{ url_for('processos.novo', caso_id=caso.id) }}" class="btn btn-primary mt-2">Adicionar primeiro processo</a>
+        </div>
+        {% endif %}
+    </div>
+</div>
+
+<div
+    class="card border-0 shadow-sm mb-4"
+    id="documentos"
+>
+
+    <div class="card-header bg-white border-0 px-4 pt-4 pb-0">
+
+        <div class="d-flex flex-wrap justify-content-between align-items-center gap-3">
+
+            <div>
+
+                <div class="d-flex align-items-center gap-2 mb-1">
+
+                    <span style="font-size: 1.5rem;">
+                        📄
+                    </span>
+
+                    <h5 class="fw-semibold mb-0">
+                        Documentos do caso
+                    </h5>
+
+                    <span class="badge bg-primary rounded-pill">
+                        {{ documentos|length }}
+                    </span>
+
+                </div>
+
+                <p class="text-muted mb-0">
+                    Arquivos, contratos e documentos vinculados a este caso.
+                </p>
+
+            </div>
+
+            <div class="d-flex flex-wrap gap-2">
+
+                <button
+                    type="button"
+                    class="btn btn-outline-primary"
+                    data-bs-toggle="collapse"
+                    data-bs-target="#formularioDocumento"
+                    aria-expanded="false"
+                    aria-controls="formularioDocumento"
+                >
+                    + Adicionar documento
+                </button>
+
+                <button
+                    type="button"
+                    class="btn btn-primary"
+                    data-bs-toggle="collapse"
+                    data-bs-target="#formularioGerarDocumento"
+                    aria-expanded="false"
+                    aria-controls="formularioGerarDocumento"
+                >
+                    ✨ Gerar documento
+                </button>
+
+                {% if caso.area_juridica %}
+
+                    <form
+                        method="POST"
+                        action="{{ url_for(
+                            'gerador_documentos.gerar_kit',
+                            caso_id=caso.id
+                        ) }}"
+                        class="d-inline"
+                        onsubmit="
+                            return confirm(
+                                'Gerar automaticamente todos os documentos da área {{ caso.area_juridica.nome }}?'
+                            );
+                        "
+                    >
+                        <button
+                            type="submit"
+                            class="btn btn-success"
+                        >
+                            🚀 Gerar Kit {{ caso.area_juridica.nome }}
+                        </button>
+                    </form>
+
+                {% endif %}
+
+            </div>
+
+        </div>
+
+    </div>
+
+
+    <div class="card-body p-4">
+
+        <div
+            class="collapse mb-4"
+            id="formularioGerarDocumento"
+        >
+
+            <div class="border rounded-3 bg-light p-4">
+
+                <div class="d-flex align-items-start gap-3 mb-4">
+
+                    <div
+                        class="d-flex align-items-center justify-content-center bg-white border rounded-3 flex-shrink-0"
+                        style="
+                            width: 48px;
+                            height: 48px;
+                            font-size: 1.4rem;
+                        "
+                    >
+                        ✨
+                    </div>
+
+                    <div>
+
+                        <h6 class="fw-semibold mb-1">
+                            Gerar documento pelo sistema
+                        </h6>
+
+                        <p class="text-muted mb-0">
+                            Escolha um modelo. Os dados do cliente,
+                            caso, processo e usuário serão preenchidos
+                            automaticamente.
+                        </p>
+
+                    </div>
+
+                </div>
+
+                {% if modelos_documentos %}
+
+                    <form
+                        method="POST"
+                        action="{{ url_for(
+                            'gerador_documentos.preparar',
+                            caso_id=caso.id
+                        ) }}"
+                    >
+
+                        <div class="row g-3">
+                        
+
+                            <div class="col-lg-6">
+
+                                <label
+                                    for="modelo_id"
+                                    class="form-label fw-semibold"
+                                >
+                                    Modelo do documento
+                                    <span class="text-danger">*</span>
+                                </label>
+
+                                <select
+                                    class="form-select"
+                                    id="modelo_id"
+                                    name="modelo_id"
+                                    required
+                                >
+
+                                    <option value="">
+                                        Selecione um modelo
+                                    </option>
+
+                                    {% for modelo in modelos_documentos %}
+
+                                        <option value="{{ modelo.id }}">
+                                            {{ modelo.nome }}
+
+                                            {% if modelo.tipo_documento %}
+                                                — {{ modelo.tipo_documento }}
+                                            {% endif %}
+
+                                            — versão {{ modelo.versao }}
+                                        </option>
+
+                                    {% endfor %}
+
+                                </select>
+
+                                <div class="form-text">
+                                    Somente modelos ativos são exibidos.
+                                </div>
+
+                            </div>
+
+                            <div class="col-lg-6">
+
+                                <label
+                                    for="processo_id_gerador"
+                                    class="form-label fw-semibold"
+                                >
+                                    Processo
+                                </label>
+
+                                <select
+                                    class="form-select"
+                                    id="processo_id_gerador"
+                                    name="processo_id"
+                                >
+
+                                    <option value="">
+                                        Não utilizar processo
+                                    </option>
+
+                                    {% for processo in processos %}
+
+                                        <option value="{{ processo.id }}">
+                                            {{
+                                                processo.numero_cnj
+                                                or "Processo sem número"
+                                            }}
+
+                                            {% if processo.tribunal %}
+                                                — {{ processo.tribunal }}
+                                            {% endif %}
+                                        </option>
+
+                                    {% endfor %}
+
+                                </select>
+
+                                {% if processos %}
+
+                                    <div class="form-text">
+                                        Se o modelo utilizar variáveis de
+                                        processo, escolha o processo correto.
+                                    </div>
+
+                                {% else %}
+
+                                    <div class="form-text text-warning">
+                                        Este caso ainda não possui processos
+                                        cadastrados.
+                                    </div>
+
+                                {% endif %}
+
+                            </div>
+
+                            <div class="col-12">
+
+                                <div
+                                    class="alert alert-info mb-0"
+                                    role="alert"
+                                >
+                                    O documento será gerado em formato DOCX
+                                    e salvo automaticamente na lista de
+                                    documentos deste caso.
+                                </div>
+
+                            </div>
+
+                            <div class="col-12">
+
+                                <div class="d-flex flex-wrap justify-content-end gap-2">
+
+                                    <button
+                                        type="button"
+                                        class="btn btn-outline-secondary"
+                                        data-bs-toggle="collapse"
+                                        data-bs-target="#formularioGerarDocumento"
+                                    >
+                                        Cancelar
+                                    </button>
+
+                                    <button
+                                        type="submit"
+                                        class="btn btn-success"
+                                    >
+                                        Continuar para preenchimento
+                                    </button>
+
+                                </div>
+
+                            </div>
+
+                        </div>
+
+                    </form>
+
+                {% else %}
+
+                    <div
+                        class="alert alert-warning mb-0"
+                        role="alert"
+                    >
+                        Nenhum modelo ativo foi encontrado.
+                        Cadastre e valide um modelo DOCX antes de gerar
+                        documentos.
+                    </div>
+
+                {% endif %}
+
+            </div>
+
+        </div>
+
+
+        <div
+            class="collapse mb-4"
+            id="formularioDocumento"
+        >
+
+            <div class="border rounded-3 bg-light p-4">
+
+                <h6 class="fw-semibold mb-3">
+                    Enviar novo documento
+                </h6>
+
+                <form
+                    method="POST"
+                    action="{{ url_for(
+                        'documentos_caso.novo',
+                        caso_id=caso.id
+                    ) }}"
+                    enctype="multipart/form-data"
+                >
+
+                    <div class="row g-3">
+
+                        <div class="col-lg-6">
+
+                            <label
+                                for="arquivo"
+                                class="form-label fw-semibold"
+                            >
+                                Arquivo
+                                <span class="text-danger">*</span>
+                            </label>
+
+                            <input
+                                type="file"
+                                class="form-control"
+                                id="arquivo"
+                                name="arquivo"
+                                accept=".pdf,.doc,.docx,.xls,.xlsx,.csv,.jpg,.jpeg,.png,.webp,.zip,.rar,.7z"
+                                required
+                            >
+
+                            <div class="form-text">
+                                Tamanho máximo: 25 MB.
+                            </div>
+
+                        </div>
+
+
+                        <div class="col-lg-6">
+
+                            <label
+                                for="tipo_documento"
+                                class="form-label fw-semibold"
+                            >
+                                Tipo do documento
+                            </label>
+
+                            <select
+                                class="form-select"
+                                id="tipo_documento"
+                                name="tipo_documento"
+                            >
+
+                                <option value="">
+                                    Selecione
+                                </option>
+
+                                <option value="Documento pessoal">
+                                    Documento pessoal
+                                </option>
+
+                                <option value="Contrato">
+                                    Contrato
+                                </option>
+
+                                <option value="Procuração">
+                                    Procuração
+                                </option>
+
+                                <option value="Comprovante">
+                                    Comprovante
+                                </option>
+
+                                <option value="Petição">
+                                    Petição
+                                </option>
+
+                                <option value="Decisão">
+                                    Decisão
+                                </option>
+
+                                <option value="Sentença">
+                                    Sentença
+                                </option>
+
+                                <option value="Laudo">
+                                    Laudo
+                                </option>
+
+                                <option value="Planilha">
+                                    Planilha
+                                </option>
+
+                                <option value="Outro">
+                                    Outro
+                                </option>
+
+                            </select>
+
+                        </div>
+
+
+                        <div class="col-12">
+
+                            <label
+                                for="observacoes_documento"
+                                class="form-label fw-semibold"
+                            >
+                                Observações
+                            </label>
+
+                            <textarea
+                                class="form-control"
+                                id="observacoes_documento"
+                                name="observacoes"
+                                rows="3"
+                                placeholder="Digite uma observação sobre o documento, se necessário."
+                            ></textarea>
+
+                        </div>
+
+
+                        <div class="col-12">
+
+                            <div class="d-flex flex-wrap justify-content-end gap-2">
+
+                                <button
+                                    type="button"
+                                    class="btn btn-outline-secondary"
+                                    data-bs-toggle="collapse"
+                                    data-bs-target="#formularioDocumento"
+                                >
+                                    Cancelar
+                                </button>
+
+                                <button
+                                    type="submit"
+                                    class="btn btn-success"
+                                >
+                                    Enviar documento
+                                </button>
+
+                            </div>
+
+                        </div>
+
+                    </div>
+
+                </form>
+
+            </div>
+
+        </div>
+
+
+        {% if documentos %}
+
+            <div class="table-responsive">
+
+                <table class="table align-middle mb-0">
+
+                    <thead class="table-light">
+
+                        <tr>
+
+                            <th>
+                                Documento
+                            </th>
+
+                            <th>
+                                Tipo
+                            </th>
+
+                            <th>
+                                Enviado por
+                            </th>
+
+                            <th>
+                                Data
+                            </th>
+
+                            <th class="text-end">
+                                Ações
+                            </th>
+
+                        </tr>
+
+                    </thead>
+
+                    <tbody>
+
+                        {% for documento in documentos %}
+
+                            <tr>
+
+                                <td>
+
+                                    <div class="d-flex align-items-start gap-3">
+
+                                        <div
+                                            class="d-flex align-items-center justify-content-center bg-light border rounded-3 flex-shrink-0"
+                                            style="
+                                                width: 44px;
+                                                height: 44px;
+                                                font-size: 1.35rem;
+                                            "
+                                        >
+                                            {{ documento.icone }}
+                                        </div>
+
+                                        <div>
+
+                                            <div class="fw-semibold">
+                                                {{ documento.nome_original }}
+                                            </div>
+
+                                            <small class="text-muted">
+
+                                                {{ documento.extensao|upper }}
+
+                                                ·
+
+                                                {{ documento.tamanho_formatado }}
+
+                                            </small>
+
+                                            {% if documento.observacoes %}
+
+                                                <div class="small text-muted mt-1">
+                                                    {{ documento.observacoes }}
+                                                </div>
+
+                                            {% endif %}
+
+                                        </div>
+
+                                    </div>
+
+                                </td>
+
+                                <td>
+
+                                    {% if documento.tipo_documento %}
+
+                                        <span class="badge bg-light text-dark border">
+                                            {{ documento.tipo_documento }}
+                                        </span>
+
+                                    {% else %}
+
+                                        <span class="text-muted">
+                                            Não informado
+                                        </span>
+
+                                    {% endif %}
+
+                                </td>
+
+                                <td>
+
+                                    {% if documento.usuario %}
+
+                                        {{ documento.usuario.nome }}
+
+                                    {% else %}
+
+                                        <span class="text-muted">
+                                            Usuário removido
+                                        </span>
+
+                                    {% endif %}
+
+                                </td>
+
+                                <td>
+
+                                    <span class="text-nowrap">
+                                        {{ documento.criado_em.strftime('%d/%m/%Y') }}
+                                    </span>
+
+                                    <small class="text-muted d-block">
+                                        às {{ documento.criado_em.strftime('%H:%M') }}
+                                    </small>
+
+                                </td>
+
+                                <td class="text-end">
+
+                                    <div class="d-flex justify-content-end flex-wrap gap-2">
+
+                                        {% if documento.extensao|lower in [
+                                            'pdf',
+                                            'jpg',
+                                            'jpeg',
+                                            'png',
+                                            'webp'
+                                        ] %}
+
+                                            <a
+                                                href="{{ url_for(
+                                                    'documentos_caso.visualizar',
+                                                    documento_id=documento.id
+                                                ) }}"
+                                                class="btn btn-sm btn-outline-secondary"
+                                                target="_blank"
+                                                rel="noopener noreferrer"
+                                                title="Visualizar documento"
+                                            >
+                                                Visualizar
+                                            </a>
+
+                                        {% endif %}
+
+                                        <a
+                                            href="{{ url_for(
+                                                'documentos_caso.download',
+                                                documento_id=documento.id
+                                            ) }}"
+                                            class="btn btn-sm btn-outline-primary"
+                                            title="Baixar documento"
+                                        >
+                                            Baixar
+                                        </a>
+
+                                        <form
+                                            method="POST"
+                                            action="{{ url_for(
+                                                'documentos_caso.excluir',
+                                                documento_id=documento.id
+                                            ) }}"
+                                            class="d-inline"
+                                            onsubmit="
+                                                return confirm(
+                                                    'Tem certeza que deseja excluir este documento? Esta ação não poderá ser desfeita.'
+                                                );
+                                            "
+                                        >
+
+                                            <button
+                                                type="submit"
+                                                class="btn btn-sm btn-outline-danger"
+                                                title="Excluir documento"
+                                            >
+                                                Excluir
+                                            </button>
+
+                                        </form>
+
+                                    </div>
+
+                                </td>
+
+                            </tr>
+
+                        {% endfor %}
+
+                    </tbody>
+
+                </table>
+
+            </div>
+
+        {% else %}
+
+            <div class="text-center border rounded-3 bg-light py-5 px-3">
+
+                <div
+                    class="mb-3"
+                    style="font-size: 2.5rem;"
+                >
+                    📂
+                </div>
+
+                <h6 class="fw-semibold mb-2">
+                    Nenhum documento enviado
+                </h6>
+
+                <p class="text-muted mb-3">
+                    Adicione contratos, documentos pessoais, procurações,
+                    comprovantes e outros arquivos relacionados ao caso.
+                </p>
+
+                <button
+                    type="button"
+                    class="btn btn-primary"
+                    data-bs-toggle="collapse"
+                    data-bs-target="#formularioDocumento"
+                >
+                    Adicionar primeiro documento
+                </button>
+
+            </div>
+
+        {% endif %}
+
+    </div>
+
+</div>
+
+
+
+<div
+    class="card border-0 shadow-sm mb-4"
+    id="atendimentos"
+>
+    <div class="card-header bg-white border-0 px-4 pt-4 pb-0">
+
+        <div class="d-flex flex-wrap justify-content-between align-items-center gap-3">
+
+            <div>
+
+                <div class="d-flex align-items-center gap-2 mb-1">
+
+                    <span style="font-size: 1.5rem;">
+                        ☎
+                    </span>
+
+                    <h5 class="fw-semibold mb-0">
+                        Atendimentos do caso
+                    </h5>
+
+                    <span class="badge bg-primary rounded-pill">
+                        {{ atendimentos|length }}
+                    </span>
+
+                </div>
+
+                <p class="text-muted mb-0">
+                    Consultas, reuniões, ligações, mensagens e demais contatos registrados.
+                </p>
+
+            </div>
+
+            <a
+                href="{{ url_for('atendimentos.novo', caso_id=caso.id) }}"
+                class="btn btn-primary"
+            >
+                + Novo atendimento
+            </a>
+
+        </div>
+
+    </div>
+
+    <div class="card-body p-4">
+
+        {% if atendimentos %}
+
+            <div class="table-responsive">
+
+                <table class="table align-middle mb-0">
+
+                    <thead class="table-light">
+
+                        <tr>
+                            <th>Data</th>
+                            <th>Atendimento</th>
+                            <th>Responsável</th>
+                            <th>Status</th>
+                            <th>Retorno</th>
+                            <th class="text-end">Ações</th>
+                        </tr>
+
+                    </thead>
+
+                    <tbody>
+
+                        {% for atendimento in atendimentos %}
+
+                            <tr>
+
+                                <td class="text-nowrap">
+
+                                    <strong>
+                                        {{ atendimento.data_atendimento.strftime('%d/%m/%Y') }}
+                                    </strong>
+
+                                    {% if atendimento.horario %}
+                                        <small class="text-muted d-block">
+                                            às {{ atendimento.horario.strftime('%H:%M') }}
+                                        </small>
+                                    {% endif %}
+
+                                </td>
+
+                                <td>
+
+                                    <div class="fw-semibold">
+                                        {{ atendimento.assunto }}
+                                    </div>
+
+                                    <small class="text-muted d-block">
+                                        {{ atendimento.tipo_formatado }}
+                                    </small>
+
+                                    {% if atendimento.descricao %}
+
+                                        <div class="small text-muted mt-1">
+                                            {{ atendimento.descricao|truncate(140) }}
+                                        </div>
+
+                                    {% endif %}
+
+                                </td>
+
+                                <td>
+                                    {{ atendimento.usuario.nome if atendimento.usuario else 'Não definido' }}
+                                </td>
+
+                                <td>
+                                    <span class="badge {{ atendimento.status_classe }}">
+                                        {{ atendimento.status_formatado }}
+                                    </span>
+                                </td>
+
+                                <td class="text-nowrap">
+
+                                    {% if atendimento.retorno_em %}
+                                        {{ atendimento.retorno_em.strftime('%d/%m/%Y') }}
+                                    {% else %}
+                                        <span class="text-muted">Não previsto</span>
+                                    {% endif %}
+
+                                </td>
+
+                                <td class="text-end">
+
+                                    <div class="d-flex justify-content-end flex-wrap gap-2">
+
+                                        <a
+                                            href="{{ url_for(
+                                                'atendimentos.editar',
+                                                atendimento_id=atendimento.id
+                                            ) }}"
+                                            class="btn btn-sm btn-outline-primary"
+                                        >
+                                            Editar
+                                        </a>
+
+                                        <form
+                                            method="POST"
+                                            action="{{ url_for(
+                                                'atendimentos.excluir',
+                                                atendimento_id=atendimento.id
+                                            ) }}"
+                                            class="d-inline"
+                                            onsubmit="return confirm('Excluir este atendimento?');"
+                                        >
+                                            <button
+                                                type="submit"
+                                                class="btn btn-sm btn-outline-danger"
+                                            >
+                                                Excluir
+                                            </button>
+                                        </form>
+
+                                    </div>
+
+                                </td>
+
+                            </tr>
+
+                        {% endfor %}
+
+                    </tbody>
+
+                </table>
+
+            </div>
+
+        {% else %}
+
+            <div class="text-center border rounded-3 bg-light py-5 px-3">
+
+                <div class="mb-3" style="font-size: 2.5rem;">
+                    ☎
+                </div>
+
+                <h6 class="fw-semibold mb-2">
+                    Nenhum atendimento registrado
+                </h6>
+
+                <p class="text-muted mb-3">
+                    Registre consultas, reuniões, ligações, mensagens e orientações prestadas.
+                </p>
+
+                <a
+                    href="{{ url_for('atendimentos.novo', caso_id=caso.id) }}"
+                    class="btn btn-primary"
+                >
+                    Registrar primeiro atendimento
+                </a>
+
+            </div>
+
+        {% endif %}
+
+    </div>
+
+</div>
+
+
+{% endblock %}

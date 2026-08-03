@@ -1,0 +1,293 @@
+{% extends "base.html" %}
+
+{% block title %}
+Novo Contrato de Honorários
+{% endblock %}
+
+{% block page_title %}
+Novo Contrato de Honorários
+{% endblock %}
+
+{% block page_subtitle %}
+Caso {{ caso.numero_interno }}
+{% endblock %}
+
+{% block content %}
+
+<form method="POST">
+
+<div class="row g-4">
+
+    <div class="col-lg-8">
+
+        <div class="card shadow-sm border-0">
+
+            <div class="card-body p-4">
+
+                <h5 class="fw-semibold mb-4">
+                    Dados do Contrato
+                </h5>
+
+                <div class="row g-3">
+
+                    <div class="col-12">
+
+                        <label class="form-label">
+                            Descrição
+                        </label>
+
+                        <input
+                            class="form-control"
+                            name="descricao"
+                            value="{{ dados.get('descricao','Honorários advocatícios') }}"
+                        >
+
+                    </div>
+
+                    <div class="col-md-6">
+
+                        <label class="form-label">
+                            Tipo de cobrança
+                        </label>
+
+                        <select
+                            class="form-select"
+                            name="tipo_cobranca"
+                        >
+
+                            <option value="FIXO">Valor Fixo</option>
+                            <option value="EXITO">Êxito</option>
+                            <option value="FIXO_EXITO">Fixo + Êxito</option>
+                            <option value="CONSULTA">Consulta</option>
+                            <option value="MENSAL">Mensal</option>
+
+                        </select>
+
+                    </div>
+
+                    <div class="col-md-6">
+
+                        <label class="form-label">
+                            Status
+                        </label>
+
+                        <select
+                            class="form-select"
+                            name="status"
+                        >
+
+                            <option value="ATIVO">Ativo</option>
+                            <option value="QUITADO">Quitado</option>
+                            <option value="SUSPENSO">Suspenso</option>
+                            <option value="CANCELADO">Cancelado</option>
+
+                        </select>
+
+                    </div>
+
+                    <div class="col-md-4">
+
+                        <label class="form-label">
+                            Valor Total
+                        </label>
+
+                        <input
+                            class="form-control"
+                            name="valor_total"
+                            placeholder="0,00"
+                        >
+
+                    </div>
+
+                    <div class="col-md-4">
+
+                        <label class="form-label">
+                            Entrada
+                        </label>
+
+                        <input
+                            class="form-control"
+                            name="valor_entrada"
+                            value="0,00"
+                        >
+
+                    </div>
+
+                    <div class="col-md-4">
+
+                        <label class="form-label">
+                            Parcelas
+                        </label>
+
+                        <input
+                            type="number"
+                            min="1"
+                            class="form-control"
+                            name="quantidade_parcelas"
+                            value="1"
+                        >
+
+                    </div>
+
+                    <div class="col-md-6">
+
+                        <label class="form-label">
+                            Forma de pagamento
+                        </label>
+
+                        <select
+                            class="form-select"
+                            name="forma_pagamento"
+                        >
+
+                            <option value="">Selecione</option>
+                            <option>PIX</option>
+                            <option>Boleto</option>
+                            <option>Dinheiro</option>
+                            <option>Cartão de Crédito</option>
+                            <option>Cartão de Débito</option>
+                            <option>Transferência Bancária</option>
+
+                        </select>
+
+                    </div>
+
+                    <div class="col-md-6">
+
+                        <label class="form-label">
+                            Percentual de Êxito (%)
+                        </label>
+
+                        <input
+                            class="form-control"
+                            name="percentual_exito"
+                            placeholder="Ex.: 20"
+                        >
+
+                    </div>
+
+                    <div class="col-md-6">
+
+                        <label class="form-label">
+                            Data do Contrato
+                        </label>
+
+                        <input
+                            type="date"
+                            class="form-control"
+                            name="data_contrato"
+                        >
+
+                    </div>
+
+                    <div class="col-md-6">
+
+                        <label class="form-label">
+                            Primeiro Vencimento
+                        </label>
+
+                        <input
+                            type="date"
+                            class="form-control"
+                            name="primeiro_vencimento"
+                        >
+
+                    </div>
+
+                    <div class="col-12">
+
+                        <label class="form-label">
+                            Observações
+                        </label>
+
+                        <textarea
+                            class="form-control"
+                            rows="5"
+                            name="observacoes"
+                        ></textarea>
+
+                    </div>
+
+                </div>
+
+            </div>
+
+        </div>
+
+    </div>
+
+
+    <div class="col-lg-4">
+
+        <div class="card shadow-sm border-0">
+
+            <div class="card-body">
+
+                <h6 class="fw-semibold mb-3">
+                    Resumo
+                </h6>
+
+                <p class="mb-1">
+                    <strong>{{ caso.numero_interno }}</strong>
+                </p>
+
+                <p class="mb-1">
+                    {{ caso.titulo }}
+                </p>
+
+                <p class="text-muted">
+                    {{ caso.cliente.nome }}
+                </p>
+
+                <hr>
+
+                <div class="alert alert-info">
+
+                    Após salvar, o sistema irá:
+
+                    <ul class="mb-0 mt-2">
+
+                        <li>Gerar automaticamente todas as parcelas.</li>
+
+                        <li>Calcular saldo pendente.</li>
+
+                        <li>Controlar pagamentos.</li>
+
+                        <li>Permitir baixa das parcelas.</li>
+
+                    </ul>
+
+                </div>
+
+                <div class="d-grid gap-2">
+
+                    <button
+                        class="btn btn-success"
+                        type="submit"
+                    >
+                        Salvar Contrato
+                    </button>
+
+                    <a
+                        href="{{ url_for(
+                            'casos.detalhes',
+                            caso_id=caso.id
+                        ) }}"
+                        class="btn btn-outline-secondary"
+                    >
+                        Cancelar
+                    </a>
+
+                </div>
+
+            </div>
+
+        </div>
+
+    </div>
+
+</div>
+
+</form>
+
+{% endblock %}

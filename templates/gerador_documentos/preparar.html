@@ -1,0 +1,616 @@
+{% extends "base.html" %}
+
+{% block title %}Preparar documento{% endblock %}
+{% block page_title %}Preparar documento{% endblock %}
+{% block page_subtitle %}Revise os dados antes da geração{% endblock %}
+
+{% block content %}
+{% set total_variaveis = (preenchidas|length) + (faltantes|length) %}
+{% set percentual = percentual_preenchido if percentual_preenchido is defined else (((preenchidas|length * 100) / total_variaveis)|round|int if total_variaveis else 100) %}
+
+<style>
+    .document-field {
+        transition: border-color .2s ease, box-shadow .2s ease, transform .2s ease;
+    }
+
+    .document-field:focus-within {
+        border-color: rgba(var(--bs-warning-rgb), .7) !important;
+        box-shadow: 0 0 0 .2rem rgba(var(--bs-warning-rgb), .12);
+        transform: translateY(-1px);
+    }
+
+    .sensitive-toggle {
+        position: absolute;
+        top: 50%;
+        right: .45rem;
+        transform: translateY(-50%);
+        z-index: 3;
+    }
+
+    .campo-sensivel {
+        padding-right: 3rem;
+    }
+
+    .automatic-value {
+        max-width: 430px;
+        white-space: normal;
+        overflow-wrap: anywhere;
+    }
+</style>
+
+<div class="d-flex flex-wrap justify-content-between align-items-center gap-3 mb-4">
+    <div>
+        <span class="badge bg-dark mb-2">{{ caso.numero_interno }}</span>
+
+        <h3 class="fw-bold mb-1">{{ modelo.nome }}</h3>
+
+        <p class="text-muted mb-0">
+            Modelo versão {{ modelo.versao }} para {{ caso.cliente.nome }}.
+        </p>
+    </div>
+
+    <a
+        href="{{ url_for('casos.detalhes', caso_id=caso.id, _anchor='documentos') }}"
+        class="btn btn-outline-secondary"
+    >
+        Voltar ao caso
+    </a>
+</div>
+
+<div class="row g-4">
+    <div class="col-lg-8">
+        <div class="card border-0 shadow-sm mb-4">
+            <div class="card-body p-4">
+                <div class="d-flex flex-wrap justify-content-between align-items-start gap-3 mb-4">
+                    <div class="d-flex align-items-start gap-3">
+                        <div
+                            class="d-flex align-items-center justify-content-center bg-light border rounded-3 flex-shrink-0"
+                            style="width: 48px; height: 48px; font-size: 1.4rem;"
+                        >
+                            ✨
+                        </div>
+
+                        <div>
+                            <h5 class="fw-semibold mb-1">
+                                Assistente de preenchimento
+                            </h5>
+
+                            <p class="text-muted mb-0">
+                                O sistema localizou os dados disponíveis.
+                                Preencha somente o que ainda falta.
+                            </p>
+                        </div>
+                    </div>
+
+                    <span class="badge text-bg-light border px-3 py-2">
+                        <span id="percentual-concluido">{{ percentual }}</span>% concluído
+                    </span>
+                </div>
+
+                <div class="mb-4">
+                    <div class="d-flex justify-content-between align-items-center mb-2">
+                        <small class="text-muted">
+                            Progresso do preenchimento
+                        </small>
+
+                        <small class="fw-semibold">
+                            <span id="quantidade-preenchida">{{ preenchidas|length }}</span>
+                            de {{ total_variaveis }} variáveis
+                        </small>
+                    </div>
+
+                    <div
+                        class="progress"
+                        role="progressbar"
+                        aria-label="Progresso do preenchimento"
+                        aria-valuenow="{{ percentual }}"
+                        aria-valuemin="0"
+                        aria-valuemax="100"
+                        style="height: 10px;"
+                        id="progresso-preenchimento"
+                    >
+                        <div
+                            class="progress-bar {% if percentual == 100 %}bg-success{% else %}bg-warning{% endif %}"
+                            style="width: {{ percentual }}%;"
+                            id="barra-progresso"
+                        ></div>
+                    </div>
+                </div>
+
+                <form
+                    method="POST"
+                    action="{{ url_for('gerador_documentos.gerar', caso_id=caso.id) }}"
+                    id="form-gerar-documento"
+                    novalidate
+                >
+                    <input type="hidden" name="modelo_id" value="{{ modelo.id }}">
+
+                    <input
+                        type="hidden"
+                        name="processo_id"
+                        value="{{ processo.id if processo else '' }}"
+                    >
+
+                    {% if faltantes %}
+                        <div class="alert alert-warning d-flex align-items-start gap-2">
+                            <span aria-hidden="true">⚠️</span>
+
+                            <div>
+                                <strong>
+                                    {{ faltantes|length }} campo(s) pendente(s)
+                                </strong>
+
+                                <div class="small mt-1">
+                                    Preencha os campos indicados para concluir o documento.
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="row g-3">
+                            {% for campo in faltantes %}
+                                {% set indice_campo = loop.index0 %}
+                                {% include "components/campo_documento.html" %}
+                            {% endfor %}
+                        </div>
+                    {% else %}
+                        <div class="alert alert-success d-flex align-items-start gap-2 mb-0">
+                            <span aria-hidden="true">✅</span>
+
+                            <div>
+                                <strong>Tudo pronto.</strong>
+
+                                <div class="small mt-1">
+                                    Todas as variáveis do modelo já possuem valor.
+                                </div>
+                            </div>
+                        </div>
+                    {% endif %}
+
+                    <div class="d-flex flex-wrap justify-content-end gap-2 mt-4">
+                        <a
+                            href="{{ url_for('casos.detalhes', caso_id=caso.id, _anchor='documentos') }}"
+                            class="btn btn-outline-secondary"
+                        >
+                            Cancelar
+                        </a>
+
+                        <button
+                            type="submit"
+                            class="btn btn-success"
+                            id="botao-gerar-documento"
+                        >
+                            <span class="texto-normal">
+                                ✨ Gerar DOCX e PDF
+                            </span>
+
+                            <span class="texto-carregando d-none">
+                                <span
+                                    class="spinner-border spinner-border-sm me-2"
+                                    aria-hidden="true"
+                                ></span>
+                                Gerando documento...
+                            </span>
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+
+        {% if preenchidas %}
+            <div class="card border-0 shadow-sm">
+                <div class="card-body p-4">
+                    <div class="d-flex flex-wrap align-items-center justify-content-between gap-3 mb-3">
+                        <div>
+                            <h5 class="fw-semibold mb-1">
+                                Dados preenchidos automaticamente
+                            </h5>
+
+                            <p class="text-muted mb-0">
+                                Confira os dados que serão aplicados ao documento.
+                            </p>
+                        </div>
+
+                        <span class="badge bg-success rounded-pill px-3 py-2">
+                            {{ preenchidas|length }}
+                        </span>
+                    </div>
+
+                    <div class="accordion" id="accordion-dados-automaticos">
+                        {% set grupos = {} %}
+
+                        {% for campo in preenchidas %}
+                            {% set meta = campo.meta if campo.meta is defined and campo.meta else campo %}
+                            {% set grupo = meta.grupo if meta.grupo is defined else (campo.grupo if campo.grupo is defined else campo.codigo.split('.')[0]) %}
+                            {% if grupos.update({grupo: (grupos.get(grupo, []) + [campo])}) %}{% endif %}
+                        {% endfor %}
+
+                        {% for grupo, campos in grupos.items() %}
+                            <div class="accordion-item border rounded-3 mb-2 overflow-hidden">
+                                <h2 class="accordion-header">
+                                    <button
+                                        class="accordion-button {% if not loop.first %}collapsed{% endif %}"
+                                        type="button"
+                                        data-bs-toggle="collapse"
+                                        data-bs-target="#grupo-{{ loop.index }}"
+                                        aria-expanded="{{ 'true' if loop.first else 'false' }}"
+                                        aria-controls="grupo-{{ loop.index }}"
+                                    >
+                                        <div class="d-flex align-items-center justify-content-between w-100 me-3">
+                                            <span class="fw-semibold">
+                                                {{ grupo }}
+                                            </span>
+
+                                            <span class="badge text-bg-success rounded-pill">
+                                                {{ campos|length }}
+                                            </span>
+                                        </div>
+                                    </button>
+                                </h2>
+
+                                <div
+                                    id="grupo-{{ loop.index }}"
+                                    class="accordion-collapse collapse {% if loop.first %}show{% endif %}"
+                                    data-bs-parent="#accordion-dados-automaticos"
+                                >
+                                    <div class="accordion-body p-0">
+                                        <div class="table-responsive">
+                                            <table class="table table-hover align-middle mb-0">
+                                                <thead class="table-light">
+                                                    <tr>
+                                                        <th>Campo</th>
+                                                        <th>Valor</th>
+                                                        <th>Origem</th>
+                                                    </tr>
+                                                </thead>
+
+                                                <tbody>
+                                                    {% for campo in campos %}
+                                                        {% set meta = campo.meta if campo.meta is defined and campo.meta else campo %}
+                                                        {% set sensivel = meta.sensivel if meta.sensivel is defined else false %}
+
+                                                        <tr>
+                                                            <td class="fw-semibold">
+                                                                <span class="d-inline-flex align-items-center gap-2">
+                                                                    <i class="bi {{ meta.icone or 'bi-check-circle' }}"></i>
+                                                                    {{ meta.descricao or campo.descricao }}
+                                                                </span>
+
+                                                                <div class="small text-muted font-monospace mt-1">
+                                                                    {{ campo.codigo }}
+                                                                </div>
+                                                            </td>
+
+                                                            <td class="automatic-value">
+                                                                {% if sensivel %}
+                                                                    <span
+                                                                        class="dado-sensivel"
+                                                                        data-valor="{{ campo.valor }}"
+                                                                    >
+                                                                        ••••••••
+                                                                    </span>
+
+                                                                    <button
+                                                                        type="button"
+                                                                        class="btn btn-sm btn-link text-decoration-none botao-revelar"
+                                                                    >
+                                                                        Mostrar
+                                                                    </button>
+                                                                {% else %}
+                                                                    {{ campo.valor }}
+                                                                {% endif %}
+                                                            </td>
+
+                                                            <td>
+                                                                <span class="badge text-bg-success">
+                                                                    Cadastro
+                                                                </span>
+                                                            </td>
+                                                        </tr>
+                                                    {% endfor %}
+                                                </tbody>
+                                            </table>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        {% endfor %}
+                    </div>
+                </div>
+            </div>
+        {% endif %}
+    </div>
+
+    <div class="col-lg-4">
+        <div class="card border-0 shadow-sm mb-4">
+            <div class="card-body p-4">
+                <h5 class="fw-semibold mb-3">
+                    Resumo da geração
+                </h5>
+
+                <div class="mb-3">
+                    <small class="text-muted d-block">Cliente</small>
+                    <strong>{{ caso.cliente.nome }}</strong>
+                </div>
+
+                <div class="mb-3">
+                    <small class="text-muted d-block">Caso</small>
+
+                    <strong>
+                        {{ caso.numero_interno }} — {{ caso.titulo }}
+                    </strong>
+                </div>
+
+                <div class="mb-3">
+                    <small class="text-muted d-block">Modelo</small>
+                    <strong>{{ modelo.nome }}</strong>
+
+                    <div class="small text-muted">
+                        Versão {{ modelo.versao }}
+                    </div>
+                </div>
+
+                <div class="mb-3">
+                    <small class="text-muted d-block">Processo</small>
+
+                    {% if processo %}
+                        <strong>
+                            {{ processo.numero_cnj or processo.numero or 'Processo sem número' }}
+                        </strong>
+
+                        {% if processo.tribunal %}
+                            <div class="small text-muted">
+                                {{ processo.tribunal }}
+                            </div>
+                        {% endif %}
+                    {% else %}
+                        <span class="text-muted">Não utilizado</span>
+                    {% endif %}
+                </div>
+
+                <hr>
+
+                <div class="d-flex justify-content-between align-items-center mb-2">
+                    <span class="text-muted">Automáticas</span>
+
+                    <span class="badge text-bg-success">
+                        {{ preenchidas|length }}
+                    </span>
+                </div>
+
+                <div class="d-flex justify-content-between align-items-center">
+                    <span class="text-muted">Manuais</span>
+
+                    <span class="badge {% if faltantes %}text-bg-warning{% else %}text-bg-success{% endif %}">
+                        {{ faltantes|length }}
+                    </span>
+                </div>
+            </div>
+        </div>
+
+        <div class="alert alert-info">
+            <strong>Arquivos gerados</strong>
+
+            <div class="small mt-1">
+                O documento será salvo no caso em DOCX. O sistema também
+                tentará criar a versão em PDF e registrará a geração na Timeline.
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+{{ super() }}
+
+<script>
+document.addEventListener("DOMContentLoaded", function () {
+    const formulario = document.getElementById("form-gerar-documento");
+    const botaoGerar = document.getElementById("botao-gerar-documento");
+    const barraProgresso = document.getElementById("barra-progresso");
+    const progresso = document.getElementById("progresso-preenchimento");
+    const percentualConcluido = document.getElementById("percentual-concluido");
+    const quantidadePreenchida = document.getElementById("quantidade-preenchida");
+
+    const totalAutomaticas = {{ preenchidas|length }};
+    const totalVariaveis = {{ total_variaveis }};
+
+    const somenteNumeros = (valor) => String(valor || "").replace(/\D/g, "");
+
+    const mascaras = {
+        cpf(valor) {
+            let numeros = somenteNumeros(valor).slice(0, 11);
+            numeros = numeros.replace(/(\d{3})(\d)/, "$1.$2");
+            numeros = numeros.replace(/(\d{3})(\d)/, "$1.$2");
+            numeros = numeros.replace(/(\d{3})(\d{1,2})$/, "$1-$2");
+            return numeros;
+        },
+
+        cnpj(valor) {
+            let numeros = somenteNumeros(valor).slice(0, 14);
+            numeros = numeros.replace(/^(\d{2})(\d)/, "$1.$2");
+            numeros = numeros.replace(/^(\d{2})\.(\d{3})(\d)/, "$1.$2.$3");
+            numeros = numeros.replace(/\.(\d{3})(\d)/, ".$1/$2");
+            numeros = numeros.replace(/(\d{4})(\d)/, "$1-$2");
+            return numeros;
+        },
+
+        telefone(valor) {
+            let numeros = somenteNumeros(valor).slice(0, 11);
+
+            if (numeros.length <= 10) {
+                numeros = numeros.replace(/^(\d{2})(\d)/, "($1) $2");
+                numeros = numeros.replace(/(\d{4})(\d)/, "$1-$2");
+            } else {
+                numeros = numeros.replace(/^(\d{2})(\d)/, "($1) $2");
+                numeros = numeros.replace(/(\d{5})(\d)/, "$1-$2");
+            }
+
+            return numeros;
+        },
+
+        cep(valor) {
+            let numeros = somenteNumeros(valor).slice(0, 8);
+            return numeros.replace(/(\d{5})(\d)/, "$1-$2");
+        },
+
+        moeda(valor) {
+            const numeros = somenteNumeros(valor);
+
+            if (!numeros) {
+                return "";
+            }
+
+            return (Number(numeros) / 100).toLocaleString("pt-BR", {
+                minimumFractionDigits: 2,
+                maximumFractionDigits: 2
+            });
+        }
+    };
+
+    function aplicarMascara(campo) {
+        const mascara = campo.dataset.mascara;
+
+        if (!mascara || !mascaras[mascara]) {
+            return;
+        }
+
+        campo.value = mascaras[mascara](campo.value);
+    }
+
+    document.querySelectorAll("[data-mascara]").forEach(function (campo) {
+        if (!campo.dataset.mascara) {
+            return;
+        }
+
+        aplicarMascara(campo);
+
+        campo.addEventListener("input", function () {
+            aplicarMascara(campo);
+            atualizarProgresso();
+        });
+    });
+
+    function campoEstaPreenchido(campo) {
+        if (campo.disabled) {
+            return true;
+        }
+
+        if (campo.type === "checkbox") {
+            return campo.checked;
+        }
+
+        return String(campo.value || "").trim() !== "";
+    }
+
+    function atualizarProgresso() {
+        const camposManuais = Array.from(
+            document.querySelectorAll(".campo-dinamico")
+        ).filter(function (campo) {
+            return campo.name && campo.name.startsWith("valor__");
+        });
+
+        const preenchidosManuais = camposManuais.filter(
+            campoEstaPreenchido
+        ).length;
+
+        const totalPreenchidos = totalAutomaticas + preenchidosManuais;
+        const percentual = totalVariaveis
+            ? Math.round((totalPreenchidos * 100) / totalVariaveis)
+            : 100;
+
+        if (percentualConcluido) {
+            percentualConcluido.textContent = percentual;
+        }
+
+        if (quantidadePreenchida) {
+            quantidadePreenchida.textContent = totalPreenchidos;
+        }
+
+        if (barraProgresso) {
+            barraProgresso.style.width = percentual + "%";
+            barraProgresso.classList.toggle("bg-success", percentual === 100);
+            barraProgresso.classList.toggle("bg-warning", percentual !== 100);
+        }
+
+        if (progresso) {
+            progresso.setAttribute("aria-valuenow", String(percentual));
+        }
+    }
+
+    document.querySelectorAll(".campo-dinamico").forEach(function (campo) {
+        campo.addEventListener("input", atualizarProgresso);
+        campo.addEventListener("change", atualizarProgresso);
+    });
+
+    document.querySelectorAll(".botao-revelar").forEach(function (botao) {
+        botao.addEventListener("click", function () {
+            const dado = botao.parentElement.querySelector(".dado-sensivel");
+
+            if (!dado) {
+                return;
+            }
+
+            const estaOculto = dado.textContent.trim() === "••••••••";
+            dado.textContent = estaOculto ? dado.dataset.valor : "••••••••";
+            botao.textContent = estaOculto ? "Ocultar" : "Mostrar";
+        });
+    });
+
+    document.querySelectorAll("[data-sensitive-toggle]").forEach(function (botao) {
+        botao.addEventListener("click", function () {
+            const campo = document.getElementById(botao.dataset.target);
+
+            if (!campo) {
+                return;
+            }
+
+            campo.type = campo.type === "password" ? "text" : "password";
+
+            const icone = botao.querySelector("i");
+
+            if (icone) {
+                icone.classList.toggle("bi-eye");
+                icone.classList.toggle("bi-eye-slash");
+            }
+        });
+    });
+
+    if (formulario && botaoGerar) {
+        formulario.addEventListener("submit", function (evento) {
+            if (!formulario.checkValidity()) {
+                evento.preventDefault();
+                evento.stopPropagation();
+                formulario.classList.add("was-validated");
+
+                const primeiroInvalido = formulario.querySelector(":invalid");
+
+                if (primeiroInvalido) {
+                    primeiroInvalido.focus();
+                    primeiroInvalido.scrollIntoView({
+                        behavior: "smooth",
+                        block: "center"
+                    });
+                }
+
+                return;
+            }
+
+            botaoGerar.disabled = true;
+
+            const textoNormal = botaoGerar.querySelector(".texto-normal");
+            const textoCarregando = botaoGerar.querySelector(".texto-carregando");
+
+            if (textoNormal) {
+                textoNormal.classList.add("d-none");
+            }
+
+            if (textoCarregando) {
+                textoCarregando.classList.remove("d-none");
+            }
+        });
+    }
+
+    atualizarProgresso();
+});
+</script>
+{% endblock %}

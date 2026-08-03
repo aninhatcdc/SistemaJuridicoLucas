@@ -1,0 +1,133 @@
+{% extends "base.html" %}
+
+{% block title %}
+Selecionar formulário
+{% endblock %}
+
+{% block page_title %}
+Selecionar formulário
+{% endblock %}
+
+{% block page_subtitle %}
+Escolha o formulário que será preenchido neste caso.
+{% endblock %}
+
+{% block content %}
+
+<div class="d-flex flex-wrap justify-content-between align-items-center gap-3 mb-4">
+    <div>
+        <h3 class="fw-bold mb-1">📋 Iniciar formulário</h3>
+        <p class="text-muted mb-0">
+            Caso {{ caso.numero_interno }} — {{ caso.cliente.nome }}
+        </p>
+    </div>
+
+    <a
+        href="{{ url_for('formularios_caso.listar', caso_id=caso.id) }}"
+        class="btn btn-outline-secondary"
+    >
+        Voltar
+    </a>
+</div>
+
+{% if modelos %}
+
+    <form method="POST">
+        <div class="row g-4">
+            {% for modelo in modelos %}
+                <div class="col-lg-6">
+                    <label
+                        class="card border-0 shadow-sm h-100 formulario-modelo-card"
+                        for="modelo_{{ modelo.id }}"
+                        style="cursor: pointer;"
+                    >
+                        <div class="card-body p-4">
+                            <div class="d-flex align-items-start gap-3">
+                                <input
+                                    class="form-check-input mt-1"
+                                    type="radio"
+                                    name="modelo_id"
+                                    id="modelo_{{ modelo.id }}"
+                                    value="{{ modelo.id }}"
+                                    required
+                                >
+
+                                <div class="flex-grow-1">
+                                    <div class="d-flex flex-wrap justify-content-between gap-2 mb-2">
+                                        <h5 class="fw-semibold mb-0">{{ modelo.nome }}</h5>
+                                        <span class="badge bg-primary">
+                                            {{ modelo.quantidade_perguntas }} pergunta(s)
+                                        </span>
+                                    </div>
+
+                                    {% if modelo.area_juridica %}
+                                        <div class="small text-muted mb-2">
+                                            {{ modelo.area_juridica.icone or '⚖' }}
+                                            {{ modelo.area_juridica.nome }}
+                                        </div>
+                                    {% else %}
+                                        <div class="small text-muted mb-2">Formulário geral</div>
+                                    {% endif %}
+
+                                    {% if modelo.descricao %}
+                                        <p class="text-muted mb-3">{{ modelo.descricao }}</p>
+                                    {% endif %}
+
+                                    <small class="text-muted">
+                                        Código: <code>{{ modelo.codigo }}</code>
+                                        · versão {{ modelo.versao }}
+                                    </small>
+                                </div>
+                            </div>
+                        </div>
+                    </label>
+                </div>
+            {% endfor %}
+        </div>
+
+        <div class="d-flex justify-content-end gap-2 mt-4">
+            <a
+                href="{{ url_for('formularios_caso.listar', caso_id=caso.id) }}"
+                class="btn btn-outline-secondary"
+            >
+                Cancelar
+            </a>
+
+            <button type="submit" class="btn btn-primary px-4">
+                Iniciar preenchimento
+            </button>
+        </div>
+    </form>
+
+{% else %}
+
+    <div class="card border-0 shadow-sm">
+        <div class="card-body text-center py-5 px-3">
+            <div class="display-5 mb-3">📋</div>
+            <h5>Nenhum formulário disponível</h5>
+            <p class="text-muted mb-0">
+                Não há modelos ativos compatíveis com a área jurídica deste caso.
+            </p>
+        </div>
+    </div>
+
+{% endif %}
+
+<style>
+    .formulario-modelo-card {
+        transition: transform 0.15s ease, box-shadow 0.15s ease, border-color 0.15s ease;
+        border: 1px solid transparent !important;
+    }
+
+    .formulario-modelo-card:hover {
+        transform: translateY(-2px);
+        border-color: var(--bs-primary) !important;
+    }
+
+    .formulario-modelo-card:has(input[type="radio"]:checked) {
+        border-color: var(--bs-primary) !important;
+        background-color: rgba(var(--bs-primary-rgb), 0.04);
+    }
+</style>
+
+{% endblock %}

@@ -1,0 +1,310 @@
+<div class="card border-0 shadow-sm">
+    <div class="card-body p-4">
+
+        <div class="row g-4">
+
+            <div class="col-12">
+                <div class="d-flex align-items-center gap-2 mb-1">
+                    <span class="fs-5">📋</span>
+
+                    <h5 class="mb-0">
+                        Dados do formulário
+                    </h5>
+                </div>
+
+                <p class="text-muted small mb-0">
+                    Cadastre as informações gerais do modelo de formulário.
+                    Depois, será possível adicionar e organizar as perguntas.
+                </p>
+            </div>
+
+            <div class="col-lg-8">
+                <label
+                    for="nome"
+                    class="form-label fw-semibold"
+                >
+                    Nome do formulário
+                    <span class="text-danger">*</span>
+                </label>
+
+                <input
+                    type="text"
+                    class="form-control"
+                    id="nome"
+                    name="nome"
+                    maxlength="150"
+                    required
+                    autofocus
+                    value="{{ formulario.nome or '' }}"
+                    placeholder="Ex.: Entrevista trabalhista inicial"
+                >
+            </div>
+
+            <div class="col-lg-4">
+                <label
+                    for="versao"
+                    class="form-label fw-semibold"
+                >
+                    Versão
+                </label>
+
+                <input
+                    type="number"
+                    class="form-control"
+                    id="versao"
+                    name="versao"
+                    min="1"
+                    step="1"
+                    value="{{ formulario.versao or 1 }}"
+                >
+            </div>
+
+            <div class="col-md-6">
+                <label
+                    for="codigo"
+                    class="form-label fw-semibold"
+                >
+                    Código interno
+                </label>
+
+                <input
+                    type="text"
+                    class="form-control"
+                    id="codigo"
+                    name="codigo"
+                    maxlength="100"
+                    value="{{ formulario.codigo or '' }}"
+                    placeholder="Ex.: entrevista_trabalhista"
+                >
+
+                <div class="form-text">
+                    Se ficar vazio, será gerado automaticamente a partir do nome.
+                </div>
+            </div>
+
+            <div class="col-md-6">
+                <label
+                    for="area_juridica_id"
+                    class="form-label fw-semibold"
+                >
+                    Área jurídica
+                </label>
+
+                <select
+                    class="form-select"
+                    id="area_juridica_id"
+                    name="area_juridica_id"
+                >
+                    <option value="">
+                        Formulário geral
+                    </option>
+
+                    {% for area in areas_juridicas %}
+                        <option
+                            value="{{ area.id }}"
+                            {% if formulario.area_juridica_id == area.id %}
+                                selected
+                            {% endif %}
+                        >
+                            {{ area.nome }}
+                        </option>
+                    {% endfor %}
+                </select>
+
+                <div class="form-text">
+                    Formulários gerais podem ser utilizados em qualquer área.
+                </div>
+            </div>
+
+            <div class="col-12">
+                <label
+                    for="descricao"
+                    class="form-label fw-semibold"
+                >
+                    Descrição
+                </label>
+
+                <textarea
+                    class="form-control"
+                    id="descricao"
+                    name="descricao"
+                    rows="4"
+                    placeholder="Descreva a finalidade e quando este formulário deverá ser utilizado."
+                >{{ formulario.descricao or '' }}</textarea>
+            </div>
+
+            <div class="col-12">
+                <div class="form-check form-switch">
+
+                    <input
+                        class="form-check-input"
+                        type="checkbox"
+                        role="switch"
+                        id="ativo"
+                        name="ativo"
+                        {% if formulario.ativo %}checked{% endif %}
+                    >
+
+                    <label
+                        class="form-check-label fw-semibold"
+                        for="ativo"
+                    >
+                        Formulário ativo
+                    </label>
+
+                    <div class="form-text">
+                        Apenas formulários ativos poderão ser iniciados em novos casos.
+                    </div>
+                </div>
+            </div>
+
+            {% if formulario.id %}
+
+                <div class="col-12">
+                    <hr class="my-1">
+                </div>
+
+                <div class="col-12">
+
+                    <div
+                        class="
+                            d-flex
+                            flex-column
+                            flex-lg-row
+                            justify-content-between
+                            align-items-lg-center
+                            gap-3
+                        "
+                    >
+
+                        <div>
+                            <h6 class="mb-1">
+                                Perguntas do formulário
+                            </h6>
+
+                            <p class="text-muted small mb-0">
+                                Este modelo possui
+                                <strong>
+                                    {{ formulario.quantidade_perguntas }}
+                                </strong>
+                                pergunta(s) cadastrada(s).
+                            </p>
+                        </div>
+
+                        <a
+                            href="{{ url_for(
+                                'perguntas_formulario.listar',
+                                formulario_id=formulario.id
+                            ) }}"
+                            class="btn btn-outline-primary"
+                        >
+                            🧩 Administrar perguntas
+                        </a>
+
+                    </div>
+
+                    {% if not formulario.perguntas %}
+
+                        <div class="alert alert-warning mt-3 mb-0">
+                            Este modelo ainda não possui perguntas cadastradas.
+                            A administração das perguntas será adicionada na próxima etapa.
+                        </div>
+
+                    {% endif %}
+
+                </div>
+
+            {% endif %}
+
+            <div class="col-12">
+                <hr class="my-1">
+            </div>
+
+            <div class="col-12">
+
+                <div class="alert alert-light border mb-0">
+
+                    <div class="d-flex gap-3">
+
+                        <div class="fs-4">
+                            💡
+                        </div>
+
+                        <div>
+
+                            <h6 class="mb-1">
+                                Exemplos de formulários
+                            </h6>
+
+                            <p class="mb-2 text-muted small">
+                                Um mesmo mecanismo poderá ser utilizado em diferentes
+                                áreas e etapas do atendimento.
+                            </p>
+
+                            <div class="d-flex flex-wrap gap-2">
+
+                                <span class="badge text-bg-light border">
+                                    Entrevista trabalhista
+                                </span>
+
+                                <span class="badge text-bg-light border">
+                                    Atendimento previdenciário
+                                </span>
+
+                                <span class="badge text-bg-light border">
+                                    Triagem criminal
+                                </span>
+
+                                <span class="badge text-bg-light border">
+                                    Checklist documental
+                                </span>
+
+                                <span class="badge text-bg-light border">
+                                    Questionário do consumidor
+                                </span>
+
+                            </div>
+
+                        </div>
+
+                    </div>
+
+                </div>
+
+            </div>
+
+            <div class="col-12">
+
+                <div
+                    class="
+                        d-flex
+                        flex-column
+                        flex-sm-row
+                        justify-content-end
+                        gap-2
+                        pt-2
+                    "
+                >
+
+                    <a
+                        href="{{ url_for('formularios.listar') }}"
+                        class="btn btn-outline-secondary"
+                    >
+                        Cancelar
+                    </a>
+
+                    <button
+                        type="submit"
+                        class="btn btn-primary px-4"
+                    >
+                        💾 {{ texto_botao }}
+                    </button>
+
+                </div>
+
+            </div>
+
+        </div>
+
+    </div>
+</div>

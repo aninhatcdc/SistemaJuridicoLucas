@@ -1,0 +1,234 @@
+{#
+Componente reutilizável para os campos manuais do gerador de documentos.
+
+Antes do include, o template principal deve definir:
+    indice_campo = loop.index0
+
+Variável esperada:
+    campo: item produzido por services.resolvedor_variaveis
+#}
+
+{% set meta = campo.meta if campo.meta is defined and campo.meta else campo %}
+{% set codigo = campo.codigo %}
+{% set descricao = meta.descricao or campo.descricao or codigo %}
+{% set tipo = meta.tipo or campo.tipo or "texto" %}
+{% set grupo = meta.grupo or campo.grupo or "Outros" %}
+{% set placeholder = meta.placeholder or campo.placeholder or ("Informe " ~ descricao|lower) %}
+{% set ajuda = meta.ajuda or campo.ajuda or "" %}
+{% set mascara = meta.mascara or campo.mascara or "" %}
+{% set icone = meta.icone or campo.icone or "bi-input-cursor-text" %}
+{% set largura = meta.largura or campo.largura or 6 %}
+{% set opcoes = meta.opcoes or campo.opcoes or [] %}
+{% set obrigatoria = meta.obrigatoria if meta.obrigatoria is defined else true %}
+{% set editavel = meta.editavel if meta.editavel is defined else true %}
+{% set sensivel = meta.sensivel if meta.sensivel is defined else false %}
+{% set valor = campo.valor if campo.valor is defined else "" %}
+{% set conhecida = campo.conhecida if campo.conhecida is defined else true %}
+{% set input_id = "valor__" ~ indice_campo %}
+{% set input_name = "valor__" ~ indice_campo %}
+
+<div
+    class="col-12 col-md-{{ largura }}"
+    data-campo-container
+    data-codigo="{{ codigo }}"
+    data-tipo="{{ tipo }}"
+    data-grupo="{{ grupo }}"
+>
+    <div class="document-field border rounded-3 p-3 h-100 bg-body-tertiary">
+        <div class="d-flex align-items-start justify-content-between gap-3 mb-2">
+            <label for="{{ input_id }}" class="form-label fw-semibold mb-0">
+                <span class="d-inline-flex align-items-center gap-2">
+                    <i class="bi {{ icone }}" aria-hidden="true"></i>
+                    <span>{{ descricao }}</span>
+                </span>
+
+                {% if obrigatoria %}
+                    <span class="text-danger" title="Campo obrigatório">*</span>
+                {% endif %}
+            </label>
+
+            <div class="d-inline-flex flex-wrap justify-content-end gap-1">
+                {% if not conhecida %}
+                    <span class="badge text-bg-secondary">
+                        Campo personalizado
+                    </span>
+                {% else %}
+                    <span class="badge text-bg-warning">
+                        Preenchimento manual
+                    </span>
+                {% endif %}
+
+                {% if sensivel %}
+                    <span class="badge text-bg-info">
+                        <i class="bi bi-shield-lock me-1"></i>
+                        Sensível
+                    </span>
+                {% endif %}
+            </div>
+        </div>
+
+        <input
+            type="hidden"
+            name="codigo__{{ indice_campo }}"
+            value="{{ codigo }}"
+        >
+
+        {% if tipo == "texto_longo" %}
+            <textarea
+                id="{{ input_id }}"
+                name="{{ input_name }}"
+                class="form-control campo-dinamico"
+                rows="4"
+                placeholder="{{ placeholder }}"
+                data-tipo="{{ tipo }}"
+                data-mascara="{{ mascara }}"
+                {% if obrigatoria %}required{% endif %}
+                {% if not editavel %}readonly{% endif %}
+            >{{ valor }}</textarea>
+
+        {% elif tipo == "select" %}
+            <select
+                id="{{ input_id }}"
+                name="{{ input_name }}"
+                class="form-select campo-dinamico"
+                data-tipo="{{ tipo }}"
+                data-mascara="{{ mascara }}"
+                {% if obrigatoria %}required{% endif %}
+                {% if not editavel %}disabled{% endif %}
+            >
+                <option value="">{{ placeholder or "Selecione uma opção" }}</option>
+
+                {% for opcao in opcoes %}
+                    {% if opcao is mapping %}
+                        {% set opcao_valor = opcao.valor if opcao.valor is defined else opcao.codigo %}
+                        {% set opcao_rotulo = opcao.rotulo if opcao.rotulo is defined else opcao.descricao %}
+                    {% else %}
+                        {% set opcao_valor = opcao %}
+                        {% set opcao_rotulo = opcao %}
+                    {% endif %}
+
+                    <option
+                        value="{{ opcao_valor }}"
+                        {% if valor|string == opcao_valor|string %}selected{% endif %}
+                    >
+                        {{ opcao_rotulo }}
+                    </option>
+                {% endfor %}
+            </select>
+
+            {% if not editavel %}
+                <input type="hidden" name="{{ input_name }}" value="{{ valor }}">
+            {% endif %}
+
+        {% elif tipo == "booleano" %}
+            <input type="hidden" name="{{ input_name }}" value="false">
+
+            <div class="form-check form-switch pt-2">
+                <input
+                    id="{{ input_id }}"
+                    name="{{ input_name }}"
+                    class="form-check-input campo-dinamico"
+                    type="checkbox"
+                    value="true"
+                    role="switch"
+                    data-tipo="{{ tipo }}"
+                    {% if valor in [true, "true", "True", "1", 1, "sim", "Sim", "SIM", "on"] %}checked{% endif %}
+                    {% if obrigatoria %}required{% endif %}
+                    {% if not editavel %}disabled{% endif %}
+                >
+
+                <label class="form-check-label" for="{{ input_id }}">
+                    Sim
+                </label>
+            </div>
+
+        {% else %}
+            {% set html_type = "text" %}
+
+            {% if tipo == "data" %}
+                {% set html_type = "date" %}
+            {% elif tipo == "hora" %}
+                {% set html_type = "time" %}
+            {% elif tipo == "email" %}
+                {% set html_type = "email" %}
+            {% elif tipo in ["numero", "inteiro"] %}
+                {% set html_type = "number" %}
+            {% elif tipo == "telefone" %}
+                {% set html_type = "tel" %}
+            {% endif %}
+
+            {% if tipo == "moeda" %}
+                <div class="input-group">
+                    <span class="input-group-text">R$</span>
+
+                    <input
+                        id="{{ input_id }}"
+                        name="{{ input_name }}"
+                        type="text"
+                        class="form-control campo-dinamico"
+                        value="{{ valor }}"
+                        placeholder="{{ placeholder }}"
+                        inputmode="decimal"
+                        data-tipo="{{ tipo }}"
+                        data-mascara="{{ mascara or 'moeda' }}"
+                        {% if obrigatoria %}required{% endif %}
+                        {% if not editavel %}readonly{% endif %}
+                        autocomplete="off"
+                    >
+                </div>
+            {% else %}
+                <div class="position-relative">
+                    <input
+                        id="{{ input_id }}"
+                        name="{{ input_name }}"
+                        type="{{ html_type }}"
+                        class="form-control campo-dinamico{% if sensivel %} campo-sensivel{% endif %}"
+                        value="{{ valor }}"
+                        placeholder="{{ placeholder }}"
+                        data-tipo="{{ tipo }}"
+                        data-mascara="{{ mascara }}"
+                        {% if tipo == "cpf" %}inputmode="numeric" maxlength="14"{% endif %}
+                        {% if tipo == "cnpj" %}inputmode="numeric" maxlength="18"{% endif %}
+                        {% if tipo == "telefone" %}inputmode="numeric" maxlength="15"{% endif %}
+                        {% if tipo == "inteiro" %}min="0" step="1"{% endif %}
+                        {% if tipo == "numero" %}step="any"{% endif %}
+                        {% if obrigatoria %}required{% endif %}
+                        {% if not editavel %}readonly{% endif %}
+                        {% if tipo == "email" %}autocomplete="email"{% else %}autocomplete="off"{% endif %}
+                    >
+
+                    {% if sensivel and valor %}
+                        <button
+                            type="button"
+                            class="btn btn-sm btn-outline-secondary sensitive-toggle"
+                            data-sensitive-toggle
+                            data-target="{{ input_id }}"
+                            title="Mostrar ou ocultar conteúdo"
+                            aria-label="Mostrar ou ocultar conteúdo"
+                        >
+                            <i class="bi bi-eye"></i>
+                        </button>
+                    {% endif %}
+                </div>
+            {% endif %}
+        {% endif %}
+
+        <div class="d-flex flex-wrap justify-content-between gap-2 mt-2">
+            <div class="form-text m-0">
+                <span class="text-muted">Variável:</span>
+                <code>{{ '{{ ' }}{{ codigo }}{{ ' }}' }}</code>
+            </div>
+        </div>
+
+        {% if ajuda %}
+            <div class="form-text mt-2">
+                <i class="bi bi-info-circle me-1"></i>
+                {{ ajuda }}
+            </div>
+        {% endif %}
+
+        <div class="invalid-feedback">
+            Preencha este campo antes de gerar o documento.
+        </div>
+    </div>
+</div>

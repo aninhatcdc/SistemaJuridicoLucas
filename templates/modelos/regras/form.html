@@ -1,0 +1,700 @@
+{% extends "base.html" %}
+
+{% block title %}
+Nova regra — {{ modelo.nome }}
+{% endblock %}
+
+{% block page_title %}
+Nova regra
+{% endblock %}
+
+{% block page_subtitle %}
+Crie uma condição e defina o que o gerador deve fazer quando ela for atendida.
+{% endblock %}
+
+{% block content %}
+
+<form method="POST" id="form-regra">
+
+    <div
+        class="
+            d-flex
+            flex-column
+            flex-lg-row
+            justify-content-between
+            align-items-lg-center
+            gap-3
+            mb-4
+        "
+    >
+        <div>
+            <h2 class="mb-1">
+                ➕ Nova regra
+            </h2>
+
+            <p class="text-muted mb-0">
+                {{ modelo.nome }}
+                · versão {{ modelo.versao }}
+            </p>
+        </div>
+
+        <div class="d-flex flex-wrap gap-2">
+            <a
+                href="{{ url_for(
+                    'regras_modelo.listar',
+                    modelo_id=modelo.id
+                ) }}"
+                class="btn btn-outline-secondary"
+            >
+                Cancelar
+            </a>
+
+            <button
+                type="submit"
+                class="btn btn-primary"
+            >
+                Salvar regra
+            </button>
+        </div>
+    </div>
+
+    <div class="card border-0 shadow-sm mb-4">
+        <div class="card-header bg-white border-0 pt-4 px-4">
+            <h5 class="mb-1">
+                Informações da regra
+            </h5>
+
+            <p class="text-muted small mb-0">
+                Use um nome que explique claramente o objetivo da regra.
+            </p>
+        </div>
+
+        <div class="card-body p-4">
+            <div class="row g-3">
+
+                <div class="col-lg-6">
+                    <label
+                        for="nome"
+                        class="form-label fw-semibold"
+                    >
+                        Nome da regra
+                        <span class="text-danger">*</span>
+                    </label>
+
+                    <input
+                        type="text"
+                        class="form-control"
+                        id="nome"
+                        name="nome"
+                        value="{{ dados.nome }}"
+                        maxlength="150"
+                        placeholder="Ex.: Exibir dados do cônjuge"
+                        required
+                    >
+                </div>
+
+                <div class="col-lg-3">
+                    <label
+                        for="prioridade"
+                        class="form-label fw-semibold"
+                    >
+                        Prioridade
+                    </label>
+
+                    <input
+                        type="number"
+                        class="form-control"
+                        id="prioridade"
+                        name="prioridade"
+                        value="{{ dados.prioridade }}"
+                        min="0"
+                        step="1"
+                    >
+
+                    <div class="form-text">
+                        Menores números são executados primeiro.
+                    </div>
+                </div>
+
+                <div class="col-lg-3">
+                    <label class="form-label fw-semibold d-block">
+                        Status
+                    </label>
+
+                    <div class="form-check form-switch pt-2">
+                        <input
+                            class="form-check-input"
+                            type="checkbox"
+                            role="switch"
+                            id="ativa"
+                            name="ativa"
+                            {% if dados.ativa %}checked{% endif %}
+                        >
+
+                        <label
+                            class="form-check-label"
+                            for="ativa"
+                        >
+                            Regra ativa
+                        </label>
+                    </div>
+                </div>
+
+                <div class="col-12">
+                    <label
+                        for="descricao"
+                        class="form-label fw-semibold"
+                    >
+                        Descrição
+                    </label>
+
+                    <textarea
+                        class="form-control"
+                        id="descricao"
+                        name="descricao"
+                        rows="3"
+                        placeholder="Explique quando e por que esta regra deve ser usada."
+                    >{{ dados.descricao }}</textarea>
+                </div>
+
+            </div>
+        </div>
+    </div>
+
+    <div class="card border-0 shadow-sm mb-4">
+        <div class="card-header bg-white border-0 pt-4 px-4">
+            <div class="d-flex align-items-center gap-2">
+                <span class="badge text-bg-primary">
+                    SE
+                </span>
+
+                <div>
+                    <h5 class="mb-1">
+                        Condição
+                    </h5>
+
+                    <p class="text-muted small mb-0">
+                        Escolha o dado que será verificado.
+                    </p>
+                </div>
+            </div>
+        </div>
+
+        <div class="card-body p-4">
+            <div class="row g-3">
+
+                <div class="col-lg-5">
+                    <label
+                        for="campo_condicao"
+                        class="form-label fw-semibold"
+                    >
+                        Campo
+                        <span class="text-danger">*</span>
+                    </label>
+
+                    <select
+                        class="form-select"
+                        id="campo_condicao"
+                        name="campo_condicao"
+                        required
+                    >
+                        <option value="">
+                            Selecione um campo
+                        </option>
+
+                        {% set grupo_atual = namespace(valor='') %}
+
+                        {% for variavel in variaveis_condicao %}
+
+                            {% if grupo_atual.valor != variavel.grupo %}
+                                {% if grupo_atual.valor %}
+                                    </optgroup>
+                                {% endif %}
+
+                                <optgroup
+                                    label="{{ variavel.grupo | title }}"
+                                >
+
+                                {% set grupo_atual.valor = variavel.grupo %}
+                            {% endif %}
+
+                            <option
+                                value="{{ variavel.codigo }}"
+                                {% if dados.campo_condicao == variavel.codigo %}
+                                    selected
+                                {% endif %}
+                            >
+                                {{ variavel.descricao }}
+                                — {{ variavel.codigo }}
+                            </option>
+
+                        {% endfor %}
+
+                        {% if grupo_atual.valor %}
+                            </optgroup>
+                        {% endif %}
+                    </select>
+                </div>
+
+                <div class="col-lg-3">
+                    <label
+                        for="operador"
+                        class="form-label fw-semibold"
+                    >
+                        Operador
+                        <span class="text-danger">*</span>
+                    </label>
+
+                    <select
+                        class="form-select"
+                        id="operador"
+                        name="operador"
+                        required
+                    >
+                        {% for codigo, rotulo in operadores %}
+                            <option
+                                value="{{ codigo }}"
+                                {% if dados.operador == codigo %}
+                                    selected
+                                {% endif %}
+                            >
+                                {{ rotulo }}
+                            </option>
+                        {% endfor %}
+                    </select>
+                </div>
+
+                <div
+                    class="col-lg-4"
+                    id="grupo-valor-condicao"
+                >
+                    <label
+                        for="valor_condicao"
+                        class="form-label fw-semibold"
+                    >
+                        Valor
+                        <span class="text-danger">*</span>
+                    </label>
+
+                    <input
+                        type="text"
+                        class="form-control"
+                        id="valor_condicao"
+                        name="valor_condicao"
+                        value="{{ dados.valor_condicao }}"
+                        placeholder="Ex.: Casado"
+                    >
+                </div>
+
+                <div
+                    class="col-lg-4 d-none"
+                    id="grupo-valor-condicao-final"
+                >
+                    <label
+                        for="valor_condicao_final"
+                        class="form-label fw-semibold"
+                    >
+                        Valor final
+                        <span class="text-danger">*</span>
+                    </label>
+
+                    <input
+                        type="text"
+                        class="form-control"
+                        id="valor_condicao_final"
+                        name="valor_condicao_final"
+                        value="{{ dados.valor_condicao_final }}"
+                        placeholder="Ex.: 65"
+                    >
+                </div>
+
+            </div>
+        </div>
+    </div>
+
+    <div class="card border-0 shadow-sm mb-4">
+        <div class="card-header bg-white border-0 pt-4 px-4">
+            <div
+                class="
+                    d-flex
+                    flex-column
+                    flex-md-row
+                    justify-content-between
+                    align-items-md-center
+                    gap-3
+                "
+            >
+                <div class="d-flex align-items-center gap-2">
+                    <span class="badge text-bg-success">
+                        ENTÃO
+                    </span>
+
+                    <div>
+                        <h5 class="mb-1">
+                            Ações
+                        </h5>
+
+                        <p class="text-muted small mb-0">
+                            Adicione uma ou mais ações executadas quando a condição for atendida.
+                        </p>
+                    </div>
+                </div>
+
+                <button
+                    type="button"
+                    class="btn btn-outline-primary"
+                    id="adicionar-acao"
+                >
+                    + Adicionar ação
+                </button>
+            </div>
+        </div>
+
+        <div class="card-body p-4">
+
+            {% if not variaveis_acao %}
+                <div class="alert alert-warning">
+                    Este modelo não possui variáveis detectadas. As ações de
+                    campo só poderão ser cadastradas depois que o arquivo DOCX
+                    possuir variáveis reconhecíveis.
+                </div>
+            {% endif %}
+
+            <div
+                id="lista-acoes"
+                class="d-grid gap-3"
+            ></div>
+
+            <div
+                id="mensagem-sem-acoes"
+                class="text-center border rounded-3 py-5 px-3"
+            >
+                <div class="fs-2 mb-2">
+                    ⚡
+                </div>
+
+                <div class="fw-semibold">
+                    Nenhuma ação adicionada
+                </div>
+
+                <div class="text-muted small">
+                    Clique em “Adicionar ação” para começar.
+                </div>
+            </div>
+
+        </div>
+    </div>
+
+    <div class="d-flex justify-content-end gap-2 mb-4">
+        <a
+            href="{{ url_for(
+                'regras_modelo.listar',
+                modelo_id=modelo.id
+            ) }}"
+            class="btn btn-outline-secondary"
+        >
+            Cancelar
+        </a>
+
+        <button
+            type="submit"
+            class="btn btn-primary"
+        >
+            Salvar regra
+        </button>
+    </div>
+
+</form>
+
+<template id="template-acao">
+    <div class="acao-item border rounded-3 p-3">
+        <div
+            class="
+                d-flex
+                justify-content-between
+                align-items-center
+                gap-3
+                mb-3
+            "
+        >
+            <div class="fw-semibold">
+                Ação <span class="numero-acao"></span>
+            </div>
+
+            <button
+                type="button"
+                class="btn btn-sm btn-outline-danger remover-acao"
+            >
+                Remover
+            </button>
+        </div>
+
+        <div class="row g-3">
+
+            <div class="col-lg-4">
+                <label class="form-label fw-semibold">
+                    Tipo da ação
+                    <span class="text-danger">*</span>
+                </label>
+
+                <select
+                    class="form-select tipo-acao"
+                    name="acao_tipo[]"
+                    required
+                >
+                    {% for codigo, rotulo in tipos_acoes %}
+                        <option value="{{ codigo }}">
+                            {{ rotulo }}
+                        </option>
+                    {% endfor %}
+                </select>
+            </div>
+
+            <div class="col-lg-4 grupo-campo-acao">
+                <label class="form-label fw-semibold">
+                    Campo de destino
+                    <span class="text-danger">*</span>
+                </label>
+
+                <select
+                    class="form-select campo-acao"
+                    name="acao_campo[]"
+                >
+                    <option value="">
+                        Selecione um campo
+                    </option>
+
+                    {% for variavel in variaveis_acao %}
+                        <option value="{{ variavel.codigo }}">
+                            {{ variavel.descricao }}
+                            — {{ variavel.codigo }}
+                        </option>
+                    {% endfor %}
+                </select>
+            </div>
+
+            <div class="col-lg-4 grupo-valor-acao d-none">
+                <label class="form-label fw-semibold">
+                    Valor
+                    <span class="text-danger">*</span>
+                </label>
+
+                <input
+                    type="text"
+                    class="form-control valor-acao"
+                    name="acao_valor[]"
+                    placeholder="Informe o valor"
+                >
+            </div>
+
+            <div class="col-12 grupo-conteudo-acao d-none">
+                <label class="form-label fw-semibold">
+                    Conteúdo da cláusula
+                    <span class="text-danger">*</span>
+                </label>
+
+                <textarea
+                    class="form-control conteudo-acao"
+                    name="acao_conteudo[]"
+                    rows="5"
+                    placeholder="Digite o texto que será inserido no documento."
+                ></textarea>
+            </div>
+
+        </div>
+    </div>
+</template>
+
+<script>
+document.addEventListener("DOMContentLoaded", function () {
+    const operador = document.getElementById("operador");
+    const grupoValor = document.getElementById(
+        "grupo-valor-condicao"
+    );
+    const grupoValorFinal = document.getElementById(
+        "grupo-valor-condicao-final"
+    );
+    const valor = document.getElementById("valor_condicao");
+    const valorFinal = document.getElementById(
+        "valor_condicao_final"
+    );
+
+    const listaAcoes = document.getElementById("lista-acoes");
+    const mensagemSemAcoes = document.getElementById(
+        "mensagem-sem-acoes"
+    );
+    const botaoAdicionar = document.getElementById(
+        "adicionar-acao"
+    );
+    const templateAcao = document.getElementById(
+        "template-acao"
+    );
+
+    function atualizarCondicao() {
+        const semValor = [
+            "vazio",
+            "nao_vazio"
+        ].includes(operador.value);
+
+        const entre = operador.value === "entre";
+
+        grupoValor.classList.toggle(
+            "d-none",
+            semValor
+        );
+
+        grupoValorFinal.classList.toggle(
+            "d-none",
+            !entre
+        );
+
+        valor.required = !semValor;
+        valorFinal.required = entre;
+
+        if (semValor) {
+            valor.value = "";
+            valorFinal.value = "";
+        }
+
+        if (!entre) {
+            valorFinal.value = "";
+        }
+    }
+
+    function atualizarNumeracao() {
+        const itens = listaAcoes.querySelectorAll(
+            ".acao-item"
+        );
+
+        itens.forEach(function (item, indice) {
+            item.querySelector(
+                ".numero-acao"
+            ).textContent = indice + 1;
+        });
+
+        mensagemSemAcoes.classList.toggle(
+            "d-none",
+            itens.length > 0
+        );
+    }
+
+    function atualizarCamposAcao(item) {
+        const tipo = item.querySelector(
+            ".tipo-acao"
+        ).value;
+
+        const grupoCampo = item.querySelector(
+            ".grupo-campo-acao"
+        );
+        const grupoValorAcao = item.querySelector(
+            ".grupo-valor-acao"
+        );
+        const grupoConteudo = item.querySelector(
+            ".grupo-conteudo-acao"
+        );
+
+        const campo = item.querySelector(
+            ".campo-acao"
+        );
+        const valorAcao = item.querySelector(
+            ".valor-acao"
+        );
+        const conteudo = item.querySelector(
+            ".conteudo-acao"
+        );
+
+        const inserirClausula =
+            tipo === "inserir_clausula";
+
+        const exigeValor = [
+            "valor",
+            "placeholder",
+            "ajuda"
+        ].includes(tipo);
+
+        grupoCampo.classList.toggle(
+            "d-none",
+            inserirClausula
+        );
+
+        grupoValorAcao.classList.toggle(
+            "d-none",
+            !exigeValor
+        );
+
+        grupoConteudo.classList.toggle(
+            "d-none",
+            !inserirClausula
+        );
+
+        campo.required = !inserirClausula;
+        valorAcao.required = exigeValor;
+        conteudo.required = inserirClausula;
+
+        if (inserirClausula) {
+            campo.value = "";
+            valorAcao.value = "";
+        } else {
+            conteudo.value = "";
+        }
+
+        if (!exigeValor) {
+            valorAcao.value = "";
+        }
+    }
+
+    function adicionarAcao() {
+        const fragmento = templateAcao.content.cloneNode(
+            true
+        );
+
+        const item = fragmento.querySelector(
+            ".acao-item"
+        );
+
+        const seletorTipo = item.querySelector(
+            ".tipo-acao"
+        );
+
+        seletorTipo.addEventListener(
+            "change",
+            function () {
+                atualizarCamposAcao(item);
+            }
+        );
+
+        item.querySelector(
+            ".remover-acao"
+        ).addEventListener(
+            "click",
+            function () {
+                item.remove();
+                atualizarNumeracao();
+            }
+        );
+
+        listaAcoes.appendChild(fragmento);
+
+        atualizarCamposAcao(
+            listaAcoes.lastElementChild
+        );
+
+        atualizarNumeracao();
+    }
+
+    operador.addEventListener(
+        "change",
+        atualizarCondicao
+    );
+
+    botaoAdicionar.addEventListener(
+        "click",
+        adicionarAcao
+    );
+
+    atualizarCondicao();
+    adicionarAcao();
+});
+</script>
+
+{% endblock %}

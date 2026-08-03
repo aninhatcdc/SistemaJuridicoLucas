@@ -1,0 +1,315 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+
+    <title>
+        {% block title %}Sistema Jurídico{% endblock %}
+    </title>
+
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+
+    <link
+        href="https://fonts.googleapis.com/css2?family=Cinzel:wght@500;600;700&family=Poppins:wght@400;500;600&display=swap"
+        rel="stylesheet"
+    >
+
+    <link
+        href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.7/dist/css/bootstrap.min.css"
+        rel="stylesheet"
+    >
+
+    <link
+        rel="stylesheet"
+        href="{{ url_for('static', filename='css/sistema.css') }}"
+    >
+
+    <style>
+        .sidebar {
+            display: flex;
+            flex-direction: column;
+            height: 100vh;
+            overflow: hidden;
+        }
+
+        .sidebar-brand {
+            flex-shrink: 0;
+        }
+
+        .sidebar-nav {
+            flex: 1 1 auto;
+            min-height: 0;
+            overflow-y: auto;
+            overflow-x: hidden;
+            padding-bottom: 1rem;
+            scrollbar-width: thin;
+        }
+
+        .sidebar-nav::-webkit-scrollbar {
+            width: 6px;
+        }
+
+        .sidebar-nav::-webkit-scrollbar-thumb {
+            background: rgba(255, 255, 255, 0.18);
+            border-radius: 999px;
+        }
+
+        .sidebar-user {
+            flex-shrink: 0;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 0.75rem;
+            padding: 1rem 1.25rem;
+            border-top: 1px solid rgba(255, 255, 255, 0.12);
+            background: #001633;
+        }
+
+        .sidebar-user > div {
+            min-width: 0;
+            flex: 1;
+        }
+
+        .sidebar-user strong,
+        .sidebar-user small {
+            display: block;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+        }
+
+        .sidebar-user strong {
+            color: #ffffff;
+            font-size: 0.92rem;
+        }
+
+        .sidebar-user small {
+            color: rgba(255, 255, 255, 0.62);
+            font-size: 0.75rem;
+            margin-top: 0.15rem;
+        }
+
+        .sidebar-user a {
+            flex-shrink: 0;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            gap: 0.35rem;
+            padding: 0.5rem 0.75rem;
+            border: 1px solid rgba(255, 255, 255, 0.28);
+            border-radius: 0.6rem;
+            color: #ffffff;
+            text-decoration: none;
+            font-size: 0.82rem;
+            font-weight: 600;
+            transition: 0.2s ease;
+        }
+
+        .sidebar-user a:hover {
+            background: rgba(255, 255, 255, 0.10);
+            border-color: rgba(255, 255, 255, 0.45);
+            color: #ffffff;
+        }
+    </style>
+</head>
+
+<body>
+
+<div class="app-shell">
+
+    <aside class="sidebar">
+
+        <div class="sidebar-brand">
+            <img
+                src="{{ url_for('static', filename='img/logo_lucas.png') }}"
+                alt="Lucas Tavares"
+            >
+        </div>
+
+        <nav class="sidebar-nav">
+
+            <a
+                class="nav-item
+                {% if request.endpoint == 'dashboard.inicio' %}
+                    active
+                {% endif %}"
+                href="{{ url_for('dashboard.inicio') }}"
+            >
+                <span>⌂</span>
+                Dashboard
+            </a>
+
+            <a
+                class="nav-item
+                {% if request.blueprint == 'clientes' %}
+                    active
+                {% endif %}"
+                href="{{ url_for('clientes.listar') }}"
+            >
+                <span>◯</span>
+                Clientes
+            </a>
+
+            <a
+                class="nav-item
+                {% if request.blueprint == 'casos' %}
+                    active
+                {% endif %}"
+                href="{{ url_for('casos.listar') }}"
+            >
+                <span>⚖</span>
+                Casos
+            </a>
+
+            <a
+                class="nav-item
+                {% if request.blueprint == 'agenda' %}
+                    active
+                {% endif %}"
+                href="{{ url_for('agenda.listar_eventos') }}"
+            >
+                <span>▣</span>
+                Agenda
+            </a>
+
+            <a
+                class="nav-item
+                {% if request.blueprint == 'modelos' %}
+                    active
+                {% endif %}"
+                href="{{ url_for('modelos.listar') }}"
+            >
+                <span>▤</span>
+                Modelos
+            </a>
+
+            <a
+                class="nav-item
+                {% if request.blueprint == 'formularios' %}
+                    active
+                {% endif %}"
+                href="{{ url_for('formularios.listar') }}"
+            >
+                <span>☷</span>
+                Formulários
+            </a>
+
+            <a
+                class="nav-item
+                {% if request.blueprint == 'documentos' %}
+                    active
+                {% endif %}"
+                href="{{ url_for('documentos.listar') }}"
+            >
+                <span>▤</span>
+                Documentos
+            </a>
+
+            <a
+                class="nav-item
+                {% if request.blueprint == 'honorarios' %}
+                    active
+                {% endif %}"
+                href="{{ url_for('honorarios.listar') }}"
+            >
+                <span>R$</span>
+                Honorários
+            </a>
+
+            <a
+                class="nav-item
+                {% if request.blueprint == 'cobrancas' %}
+                    active
+                {% endif %}"
+                href="{{ url_for('cobrancas.listar') }}"
+            >
+                <span>↗</span>
+                Cobranças
+            </a>
+
+            <a class="nav-item disabled-link" href="#">
+                <span>⚙</span>
+                Configurações
+            </a>
+
+        </nav>
+
+        <div class="sidebar-user">
+
+            <div>
+                <strong>{{ current_user.nome }}</strong>
+                <small>{{ current_user.email }}</small>
+            </div>
+
+            <a href="{{ url_for('auth.logout') }}">
+                🚪 Sair
+            </a>
+
+        </div>
+
+    </aside>
+
+    <main class="main-content">
+
+        <header class="topbar">
+
+            <div>
+                <h1>
+                    {% block page_title %}
+                        Dashboard
+                    {% endblock %}
+                </h1>
+
+                <p>
+                    {% block page_subtitle %}
+                        Visão geral do escritório
+                    {% endblock %}
+                </p>
+            </div>
+
+        </header>
+
+        <section class="content-area">
+
+            {% with mensagens = get_flashed_messages(with_categories=true) %}
+
+                {% if mensagens %}
+
+                    {% for categoria, mensagem in mensagens %}
+
+                        <div
+                            class="alert alert-{{ categoria }} alert-dismissible fade show"
+                            role="alert"
+                        >
+                            {{ mensagem }}
+
+                            <button
+                                type="button"
+                                class="btn-close"
+                                data-bs-dismiss="alert"
+                                aria-label="Fechar"
+                            ></button>
+                        </div>
+
+                    {% endfor %}
+
+                {% endif %}
+
+            {% endwith %}
+
+            {% block content %}{% endblock %}
+
+        </section>
+
+    </main>
+
+</div>
+
+<script
+    src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.7/dist/js/bootstrap.bundle.min.js"
+></script>
+
+</body>
+</html>

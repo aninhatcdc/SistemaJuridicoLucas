@@ -1,0 +1,294 @@
+{% extends "base.html" %}
+
+{% block title %}
+Editar Contrato de Honorários
+{% endblock %}
+
+{% block page_title %}
+Editar Contrato de Honorários
+{% endblock %}
+
+{% block page_subtitle %}
+Caso {{ caso.numero_interno }}
+{% endblock %}
+
+{% block content %}
+
+<form method="POST">
+
+<div class="row g-4">
+
+    <div class="col-lg-8">
+
+        <div class="card border-0 shadow-sm">
+
+            <div class="card-body p-4">
+
+                <h5 class="fw-semibold mb-4">
+                    Dados do Contrato
+                </h5>
+
+                <div class="row g-3">
+
+                    <div class="col-12">
+
+                        <label class="form-label">
+                            Descrição
+                        </label>
+
+                        <input
+                            class="form-control"
+                            name="descricao"
+                            value="{{ honorario.descricao }}"
+                        >
+
+                    </div>
+
+                    <div class="col-md-6">
+
+                        <label class="form-label">
+                            Tipo de cobrança
+                        </label>
+
+                        <select
+                            class="form-select"
+                            name="tipo_cobranca"
+                        >
+
+                            <option value="FIXO"
+                                {% if honorario.tipo_cobranca=="FIXO" %}selected{% endif %}>
+                                Valor Fixo
+                            </option>
+
+                            <option value="EXITO"
+                                {% if honorario.tipo_cobranca=="EXITO" %}selected{% endif %}>
+                                Êxito
+                            </option>
+
+                            <option value="FIXO_EXITO"
+                                {% if honorario.tipo_cobranca=="FIXO_EXITO" %}selected{% endif %}>
+                                Fixo + Êxito
+                            </option>
+
+                            <option value="CONSULTA"
+                                {% if honorario.tipo_cobranca=="CONSULTA" %}selected{% endif %}>
+                                Consulta
+                            </option>
+
+                            <option value="MENSAL"
+                                {% if honorario.tipo_cobranca=="MENSAL" %}selected{% endif %}>
+                                Mensal
+                            </option>
+
+                        </select>
+
+                    </div>
+
+                    <div class="col-md-6">
+
+                        <label class="form-label">
+                            Status
+                        </label>
+
+                        <select
+                            class="form-select"
+                            name="status"
+                        >
+
+                            <option value="ATIVO"
+                                {% if honorario.status=="ATIVO" %}selected{% endif %}>
+                                Ativo
+                            </option>
+
+                            <option value="QUITADO"
+                                {% if honorario.status=="QUITADO" %}selected{% endif %}>
+                                Quitado
+                            </option>
+
+                            <option value="SUSPENSO"
+                                {% if honorario.status=="SUSPENSO" %}selected{% endif %}>
+                                Suspenso
+                            </option>
+
+                            <option value="CANCELADO"
+                                {% if honorario.status=="CANCELADO" %}selected{% endif %}>
+                                Cancelado
+                            </option>
+
+                        </select>
+
+                    </div>
+
+                    <div class="col-md-6">
+
+                        <label class="form-label">
+                            Forma de pagamento
+                        </label>
+
+                        <select
+                            class="form-select"
+                            name="forma_pagamento"
+                        >
+
+                            <option value="">Selecione</option>
+
+                            {% for forma in [
+                                'PIX',
+                                'Boleto',
+                                'Dinheiro',
+                                'Cartão de Crédito',
+                                'Cartão de Débito',
+                                'Transferência Bancária'
+                            ] %}
+
+                                <option
+                                    value="{{ forma }}"
+                                    {% if honorario.forma_pagamento==forma %}
+                                        selected
+                                    {% endif %}
+                                >
+                                    {{ forma }}
+                                </option>
+
+                            {% endfor %}
+
+                        </select>
+
+                    </div>
+
+                    <div class="col-md-6">
+
+                        <label class="form-label">
+                            Percentual de Êxito
+                        </label>
+
+                        <input
+                            class="form-control"
+                            name="percentual_exito"
+                            value="{{ honorario.percentual_exito or '' }}"
+                        >
+
+                    </div>
+
+                    <div class="col-md-6">
+
+                        <label class="form-label">
+                            Data do contrato
+                        </label>
+
+                        <input
+                            type="date"
+                            class="form-control"
+                            name="data_contrato"
+                            value="{% if honorario.data_contrato %}{{ honorario.data_contrato.strftime('%Y-%m-%d') }}{% endif %}"
+                        >
+
+                    </div>
+
+                    <div class="col-12">
+
+                        <label class="form-label">
+                            Observações
+                        </label>
+
+                        <textarea
+                            class="form-control"
+                            rows="5"
+                            name="observacoes"
+                        >{{ honorario.observacoes or '' }}</textarea>
+
+                    </div>
+
+                </div>
+
+            </div>
+
+        </div>
+
+    </div>
+
+
+    <div class="col-lg-4">
+
+        <div class="card border-0 shadow-sm">
+
+            <div class="card-body">
+
+                <h6 class="fw-semibold mb-3">
+                    Resumo Financeiro
+                </h6>
+
+                <div class="mb-3">
+
+                    <small class="text-muted d-block">
+                        Valor contratado
+                    </small>
+
+                    <strong>
+                        {{ honorario.valor_total_formatado }}
+                    </strong>
+
+                </div>
+
+                <div class="mb-3">
+
+                    <small class="text-muted d-block">
+                        Total recebido
+                    </small>
+
+                    <strong class="text-success">
+                        {{ honorario.total_pago_formatado }}
+                    </strong>
+
+                </div>
+
+                <div class="mb-4">
+
+                    <small class="text-muted d-block">
+                        Saldo pendente
+                    </small>
+
+                    <strong class="text-danger">
+                        {{ honorario.saldo_pendente_formatado }}
+                    </strong>
+
+                </div>
+
+                <div class="alert alert-warning">
+
+                    Os valores do contrato e as parcelas já geradas não serão alterados nesta tela.
+
+                </div>
+
+                <div class="d-grid gap-2">
+
+                    <button
+                        class="btn btn-success"
+                        type="submit"
+                    >
+                        Salvar Alterações
+                    </button>
+
+                    <a
+                        href="{{ url_for(
+                            'honorarios.detalhes',
+                            honorario_id=honorario.id
+                        ) }}"
+                        class="btn btn-outline-secondary"
+                    >
+                        Cancelar
+                    </a>
+
+                </div>
+
+            </div>
+
+        </div>
+
+    </div>
+
+</div>
+
+</form>
+
+{% endblock %}

@@ -1,0 +1,107 @@
+{% extends "base.html" %}
+
+{% block title %}Editar compromisso{% endblock %}
+
+{% block content %}
+<div class="container-fluid py-4">
+
+    <div class="d-flex flex-column flex-md-row justify-content-between align-items-md-center gap-3 mb-4">
+        <div>
+            <div class="d-flex flex-wrap align-items-center gap-2 mb-1">
+                <h2 class="mb-0">
+                    ✏️ Editar compromisso
+                </h2>
+
+                <span class="badge text-bg-{{ evento.status_classe }}">
+                    {{ evento.status_formatado }}
+                </span>
+
+                <span class="badge text-bg-{{ evento.prioridade_classe }}">
+                    {{ evento.prioridade_formatada }}
+                </span>
+            </div>
+
+            <p class="text-muted mb-0">
+                {{ evento.titulo }}
+            </p>
+        </div>
+
+        <div>
+            {% if retorno == "caso" and evento.caso_id %}
+                <a
+                    href="{{ url_for('casos.detalhes', caso_id=evento.caso_id) }}#agenda"
+                    class="btn btn-outline-secondary"
+                >
+                    ← Voltar ao caso
+                </a>
+            {% elif retorno == "calendario" %}
+                <a
+                    href="{{ url_for('agenda.calendario') }}"
+                    class="btn btn-outline-secondary"
+                >
+                    ← Voltar ao calendário
+                </a>
+            {% else %}
+                <a
+                    href="{{ url_for('agenda.listar_eventos') }}"
+                    class="btn btn-outline-secondary"
+                >
+                    ← Voltar à agenda
+                </a>
+            {% endif %}
+        </div>
+    </div>
+
+    {% if evento.atrasado %}
+        <div class="alert alert-danger d-flex align-items-center gap-2">
+            <span class="fs-5">⚠️</span>
+
+            <div>
+                <strong>Compromisso atrasado.</strong>
+                A data prevista era {{ evento.data_formatada }}.
+            </div>
+        </div>
+    {% endif %}
+
+    <form method="POST" novalidate>
+        {% set texto_botao = "Salvar alterações" %}
+        {% include "agenda/_form.html" %}
+    </form>
+
+    <div class="card border-danger shadow-sm mt-4">
+        <div class="card-body p-4">
+            <div class="d-flex flex-column flex-lg-row justify-content-between align-items-lg-center gap-3">
+                <div>
+                    <h5 class="text-danger mb-1">
+                        Excluir compromisso
+                    </h5>
+
+                    <p class="text-muted mb-0">
+                        Esta ação removerá permanentemente o compromisso da agenda.
+                    </p>
+                </div>
+
+                <form
+                    method="POST"
+                    action="{{ url_for('agenda.excluir_evento', evento_id=evento.id) }}"
+                    onsubmit="return confirm('Tem certeza de que deseja excluir este compromisso? Esta ação não poderá ser desfeita.');"
+                >
+                    <input
+                        type="hidden"
+                        name="retorno"
+                        value="{{ retorno or '' }}"
+                    >
+
+                    <button
+                        type="submit"
+                        class="btn btn-outline-danger"
+                    >
+                        🗑️ Excluir compromisso
+                    </button>
+                </form>
+            </div>
+        </div>
+    </div>
+
+</div>
+{% endblock %}

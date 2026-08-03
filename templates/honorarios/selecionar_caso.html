@@ -1,0 +1,174 @@
+{% extends "base.html" %}
+
+{% block title %}
+Novo Contrato de Honorários
+{% endblock %}
+
+{% block page_title %}
+Novo Contrato de Honorários
+{% endblock %}
+
+{% block page_subtitle %}
+Selecione o caso que receberá o contrato financeiro.
+{% endblock %}
+
+{% block content %}
+
+<div class="d-flex flex-wrap justify-content-between align-items-center gap-3 mb-4">
+
+    <div>
+
+        <h3 class="fw-bold mb-1">
+            💰 Selecionar caso
+        </h3>
+
+        <p class="text-muted mb-0">
+            O contrato ficará vinculado ao cliente e ao caso escolhidos.
+        </p>
+
+    </div>
+
+    <a
+        href="{{ url_for('honorarios.listar') }}"
+        class="btn btn-outline-secondary"
+    >
+        Voltar
+    </a>
+
+</div>
+
+
+<div class="row justify-content-center">
+
+    <div class="col-xl-8">
+
+        <div class="card border-0 shadow-sm">
+
+            <div class="card-body p-4 p-lg-5">
+
+                {% if casos %}
+
+                    <form method="POST">
+
+                        <div class="mb-4">
+
+                            <label
+                                for="caso_id"
+                                class="form-label fw-semibold"
+                            >
+                                Cliente e caso
+                                <span class="text-danger">*</span>
+                            </label>
+
+                            <select
+                                class="form-select form-select-lg"
+                                id="caso_id"
+                                name="caso_id"
+                                required
+                            >
+
+                                <option value="">
+                                    Selecione um caso
+                                </option>
+
+                                {% for caso in casos %}
+
+                                    <option
+                                        value="{{ caso.id }}"
+                                        {% if caso_id_selecionado == caso.id %}
+                                            selected
+                                        {% endif %}
+                                    >
+                                        {{ caso.cliente.nome }}
+                                        — {{ caso.numero_interno }}
+                                        — {{ caso.titulo }}
+                                        {% if caso.area_juridica %}
+                                            — {{ caso.area_juridica.nome }}
+                                        {% endif %}
+                                    </option>
+
+                                {% endfor %}
+
+                            </select>
+
+                            <div class="form-text">
+                                Depois da seleção, você preencherá valores, entrada,
+                                parcelas, vencimentos e forma de pagamento.
+                            </div>
+
+                        </div>
+
+
+                        <div class="alert alert-info">
+
+                            <strong>Como funciona:</strong>
+
+                            <ul class="mb-0 mt-2">
+                                <li>Selecione o caso desejado.</li>
+                                <li>Preencha os dados do contrato.</li>
+                                <li>O sistema criará as parcelas automaticamente.</li>
+                                <li>Os pagamentos aparecerão em Honorários e Cobranças.</li>
+                            </ul>
+
+                        </div>
+
+
+                        <div class="d-flex flex-wrap justify-content-end gap-2 mt-4">
+
+                            <a
+                                href="{{ url_for('honorarios.listar') }}"
+                                class="btn btn-outline-secondary"
+                            >
+                                Cancelar
+                            </a>
+
+                            <button
+                                type="submit"
+                                class="btn btn-success"
+                            >
+                                Continuar
+                            </button>
+
+                        </div>
+
+                    </form>
+
+                {% else %}
+
+                    <div class="text-center py-5">
+
+                        <div
+                            class="mb-3"
+                            style="font-size: 2.8rem;"
+                        >
+                            ⚖
+                        </div>
+
+                        <h5 class="fw-semibold mb-2">
+                            Nenhum caso cadastrado
+                        </h5>
+
+                        <p class="text-muted mb-4">
+                            Cadastre um caso antes de criar um contrato de honorários.
+                        </p>
+
+                        <a
+                            href="{{ url_for('casos.listar') }}"
+                            class="btn btn-primary"
+                        >
+                            Ir para Casos
+                        </a>
+
+                    </div>
+
+                {% endif %}
+
+            </div>
+
+        </div>
+
+    </div>
+
+</div>
+
+{% endblock %}

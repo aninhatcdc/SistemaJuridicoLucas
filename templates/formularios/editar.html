@@ -1,0 +1,68 @@
+{% extends "base.html" %}
+
+{% block title %}
+Editar formulário
+{% endblock %}
+
+{% block page_title %}
+Editar modelo de formulário
+{% endblock %}
+
+{% block page_subtitle %}
+Atualize os dados gerais e administre a estrutura deste formulário.
+{% endblock %}
+
+{% block content %}
+
+<div
+    class="
+        d-flex
+        flex-column
+        flex-lg-row
+        justify-content-between
+        align-items-lg-center
+        gap-3
+        mb-4
+    "
+>
+
+    <div>
+        <h2 class="mb-1">
+            ✏️ Editar formulário
+        </h2>
+
+        <p class="text-muted mb-0">
+            {{ formulario.nome }}
+        </p>
+    </div>
+
+    <div class="d-flex flex-wrap gap-2">
+
+        <a
+            href="{{ url_for(
+                'perguntas_formulario.listar',
+                formulario_id=formulario.id
+            ) }}"
+            class="btn btn-outline-primary"
+        >
+            🧩 Perguntas
+        </a>
+
+        <a
+            href="{{ url_for('formularios.listar') }}"
+            class="btn btn-outline-secondary"
+        >
+            Voltar
+        </a>
+
+    </div>
+
+</div>
+
+<form method="POST">
+    {% set texto_botao = "Salvar alterações" %}
+
+    {% include "formularios/_form.html" %}
+</form>
+
+{% endblock %}

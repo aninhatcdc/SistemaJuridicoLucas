@@ -1,0 +1,852 @@
+{% extends "base.html" %}
+
+{% block title %}
+Honorários
+{% endblock %}
+
+{% block page_title %}
+Honorários
+{% endblock %}
+
+{% block page_subtitle %}
+Caso {{ caso.numero_interno }}
+{% endblock %}
+
+{% block content %}
+
+<div class="d-flex flex-wrap justify-content-between align-items-center gap-3 mb-4">
+
+    <div>
+
+        <h3 class="fw-bold mb-1">
+            {{ honorario.descricao }}
+        </h3>
+
+        <p class="text-muted mb-0">
+            {{ honorario.tipo_cobranca_formatado }}
+        </p>
+
+    </div>
+
+    <div class="d-flex flex-wrap gap-2">
+
+        <a
+            href="{{ url_for(
+                'casos.detalhes',
+                caso_id=caso.id
+            ) }}"
+            class="btn btn-outline-secondary"
+        >
+            Voltar ao caso
+        </a>
+
+        <a
+            href="{{ url_for(
+                'honorarios.editar',
+                honorario_id=honorario.id
+            ) }}"
+            class="btn btn-warning"
+        >
+            Editar contrato
+        </a>
+
+        <form
+            method="POST"
+            action="{{ url_for(
+                'honorarios.excluir',
+                honorario_id=honorario.id
+            ) }}"
+            class="d-inline"
+            onsubmit="
+                return confirm(
+                    'Tem certeza que deseja excluir este contrato de honorários? Todas as parcelas também serão excluídas.'
+                );
+            "
+        >
+
+            <button
+                type="submit"
+                class="btn btn-outline-danger"
+            >
+                Excluir contrato
+            </button>
+
+        </form>
+
+    </div>
+
+</div>
+
+
+<div class="row g-4 mb-4">
+
+    <div class="col-md-3">
+
+        <div class="card border-0 shadow-sm h-100">
+
+            <div class="card-body p-4">
+
+                <p class="text-muted mb-2">
+                    Valor contratado
+                </p>
+
+                <h4 class="fw-bold mb-0">
+                    {{ honorario.valor_total_formatado }}
+                </h4>
+
+            </div>
+
+        </div>
+
+    </div>
+
+
+    <div class="col-md-3">
+
+        <div class="card border-0 shadow-sm h-100">
+
+            <div class="card-body p-4">
+
+                <p class="text-muted mb-2">
+                    Entrada
+                </p>
+
+                <h4 class="fw-bold mb-0">
+                    {{ honorario.valor_entrada_formatado }}
+                </h4>
+
+            </div>
+
+        </div>
+
+    </div>
+
+
+    <div class="col-md-3">
+
+        <div class="card border-0 shadow-sm h-100">
+
+            <div class="card-body p-4">
+
+                <p class="text-muted mb-2">
+                    Total recebido
+                </p>
+
+                <h4 class="fw-bold text-success mb-0">
+                    {{ honorario.total_pago_formatado }}
+                </h4>
+
+            </div>
+
+        </div>
+
+    </div>
+
+
+    <div class="col-md-3">
+
+        <div class="card border-0 shadow-sm h-100">
+
+            <div class="card-body p-4">
+
+                <p class="text-muted mb-2">
+                    Saldo pendente
+                </p>
+
+                <h4 class="fw-bold text-danger mb-0">
+                    {{ honorario.saldo_pendente_formatado }}
+                </h4>
+
+            </div>
+
+        </div>
+
+    </div>
+
+</div>
+
+
+<div class="row g-4 mb-4">
+
+    <div class="col-lg-8">
+
+        <div class="card border-0 shadow-sm h-100">
+
+            <div class="card-body p-4">
+
+                <div class="d-flex flex-wrap justify-content-between align-items-center gap-3 mb-4">
+
+                    <div>
+
+                        <h5 class="fw-semibold mb-1">
+                            Informações do contrato
+                        </h5>
+
+                        <p class="text-muted mb-0">
+                            Condições comerciais e dados do contrato.
+                        </p>
+
+                    </div>
+
+                    {% if honorario.status == "ATIVO" %}
+
+                        <span class="badge bg-success">
+                            Ativo
+                        </span>
+
+                    {% elif honorario.status == "QUITADO" %}
+
+                        <span class="badge bg-primary">
+                            Quitado
+                        </span>
+
+                    {% elif honorario.status == "SUSPENSO" %}
+
+                        <span class="badge bg-warning text-dark">
+                            Suspenso
+                        </span>
+
+                    {% elif honorario.status == "CANCELADO" %}
+
+                        <span class="badge bg-secondary">
+                            Cancelado
+                        </span>
+
+                    {% else %}
+
+                        <span class="badge bg-light text-dark border">
+                            {{ honorario.status_formatado }}
+                        </span>
+
+                    {% endif %}
+
+                </div>
+
+
+                <div class="row g-4">
+
+                    <div class="col-md-6">
+
+                        <small class="text-muted d-block">
+                            Tipo de cobrança
+                        </small>
+
+                        <strong>
+                            {{ honorario.tipo_cobranca_formatado }}
+                        </strong>
+
+                    </div>
+
+
+                    <div class="col-md-6">
+
+                        <small class="text-muted d-block">
+                            Forma de pagamento
+                        </small>
+
+                        <strong>
+                            {{ honorario.forma_pagamento or "Não informada" }}
+                        </strong>
+
+                    </div>
+
+
+                    <div class="col-md-6">
+
+                        <small class="text-muted d-block">
+                            Data do contrato
+                        </small>
+
+                        <strong>
+
+                            {% if honorario.data_contrato %}
+
+                                {{ honorario.data_contrato.strftime('%d/%m/%Y') }}
+
+                            {% else %}
+
+                                Não informada
+
+                            {% endif %}
+
+                        </strong>
+
+                    </div>
+
+
+                    <div class="col-md-6">
+
+                        <small class="text-muted d-block">
+                            Primeiro vencimento
+                        </small>
+
+                        <strong>
+
+                            {% if honorario.primeiro_vencimento %}
+
+                                {{ honorario.primeiro_vencimento.strftime('%d/%m/%Y') }}
+
+                            {% else %}
+
+                                Não informado
+
+                            {% endif %}
+
+                        </strong>
+
+                    </div>
+
+
+                    <div class="col-md-6">
+
+                        <small class="text-muted d-block">
+                            Quantidade de parcelas
+                        </small>
+
+                        <strong>
+                            {{ honorario.quantidade_parcelas }}
+                        </strong>
+
+                    </div>
+
+
+                    <div class="col-md-6">
+
+                        <small class="text-muted d-block">
+                            Percentual de êxito
+                        </small>
+
+                        <strong>
+
+                            {% if honorario.percentual_exito is not none %}
+
+                                {{ honorario.percentual_exito }}%
+
+                            {% else %}
+
+                                Não informado
+
+                            {% endif %}
+
+                        </strong>
+
+                    </div>
+
+                </div>
+
+
+                {% if honorario.observacoes %}
+
+                    <hr class="my-4">
+
+                    <small class="text-muted d-block mb-1">
+                        Observações
+                    </small>
+
+                    <p
+                        class="mb-0"
+                        style="white-space: pre-line;"
+                    >{{ honorario.observacoes }}</p>
+
+                {% endif %}
+
+            </div>
+
+        </div>
+
+    </div>
+
+
+    <div class="col-lg-4">
+
+        <div class="card border-0 shadow-sm h-100">
+
+            <div class="card-body p-4">
+
+                <h5 class="fw-semibold mb-3">
+                    Caso vinculado
+                </h5>
+
+                <p class="mb-1">
+
+                    <strong>
+                        {{ caso.numero_interno }}
+                    </strong>
+
+                </p>
+
+                <p class="mb-1">
+                    {{ caso.titulo }}
+                </p>
+
+                <p class="text-muted">
+                    {{ caso.cliente.nome }}
+                </p>
+
+                <hr>
+
+                <a
+                    href="{{ url_for(
+                        'casos.detalhes',
+                        caso_id=caso.id
+                    ) }}"
+                    class="btn btn-outline-primary w-100"
+                >
+                    Abrir caso
+                </a>
+
+            </div>
+
+        </div>
+
+    </div>
+
+</div>
+
+
+<div class="card border-0 shadow-sm mb-4">
+
+    <div class="card-header bg-white border-0 px-4 pt-4 pb-0">
+
+        <div class="d-flex flex-wrap justify-content-between align-items-center gap-3">
+
+            <div>
+
+                <h5 class="fw-semibold mb-1">
+                    Parcelas
+                </h5>
+
+                <p class="text-muted mb-0">
+                    Acompanhe vencimentos e registre pagamentos.
+                </p>
+
+            </div>
+
+            <span class="badge bg-primary rounded-pill">
+                {{ honorario.parcelas|length }}
+            </span>
+
+        </div>
+
+    </div>
+
+
+    <div class="card-body p-4">
+
+        {% if honorario.parcelas %}
+
+            <div class="table-responsive">
+
+                <table class="table align-middle mb-0">
+
+                    <thead class="table-light">
+
+                        <tr>
+
+                            <th>
+                                Parcela
+                            </th>
+
+                            <th>
+                                Vencimento
+                            </th>
+
+                            <th>
+                                Valor
+                            </th>
+
+                            <th>
+                                Status
+                            </th>
+
+                            <th>
+                                Pagamento
+                            </th>
+
+                            <th class="text-end">
+                                Ações
+                            </th>
+
+                        </tr>
+
+                    </thead>
+
+                    <tbody>
+
+                        {% for parcela in honorario.parcelas %}
+
+                            <tr>
+
+                                <td>
+
+                                    <strong>
+                                        {{ parcela.numero }}
+                                    </strong>
+
+                                    <span class="text-muted">
+                                        / {{ honorario.quantidade_parcelas }}
+                                    </span>
+
+                                </td>
+
+
+                                <td>
+
+                                    {% if parcela.data_vencimento %}
+
+                                        {{ parcela.data_vencimento.strftime('%d/%m/%Y') }}
+
+                                    {% else %}
+
+                                        <span class="text-muted">
+                                            Não informado
+                                        </span>
+
+                                    {% endif %}
+
+                                </td>
+
+
+                                <td>
+
+                                    <strong>
+                                        {{ parcela.valor_formatado }}
+                                    </strong>
+
+                                </td>
+
+
+                                <td>
+
+                                    {% if parcela.status == "PAGO" %}
+
+                                        <span class="badge bg-success">
+                                            Pago
+                                        </span>
+
+                                    {% elif parcela.status == "ATRASADO" %}
+
+                                        <span class="badge bg-danger">
+                                            Atrasado
+                                        </span>
+
+                                    {% elif parcela.status == "CANCELADO" %}
+
+                                        <span class="badge bg-secondary">
+                                            Cancelado
+                                        </span>
+
+                                    {% else %}
+
+                                        <span class="badge bg-warning text-dark">
+                                            Pendente
+                                        </span>
+
+                                    {% endif %}
+
+                                </td>
+
+
+                                <td>
+
+                                    {% if parcela.status == "PAGO" %}
+
+                                        <div>
+
+                                            {% if parcela.data_pagamento %}
+
+                                                {{ parcela.data_pagamento.strftime('%d/%m/%Y') }}
+
+                                            {% else %}
+
+                                                Data não informada
+
+                                            {% endif %}
+
+                                        </div>
+
+                                        {% if parcela.forma_pagamento %}
+
+                                            <small class="text-muted d-block">
+                                                {{ parcela.forma_pagamento }}
+                                            </small>
+
+                                        {% endif %}
+
+                                    {% else %}
+
+                                        <span class="text-muted">
+                                            Não pago
+                                        </span>
+
+                                    {% endif %}
+
+                                </td>
+
+
+                                <td class="text-end">
+
+                                    {% if parcela.status == "PAGO" %}
+
+                                        <form
+                                            method="POST"
+                                            action="{{ url_for(
+                                                'honorarios.reabrir_parcela',
+                                                parcela_id=parcela.id
+                                            ) }}"
+                                            class="d-inline"
+                                            onsubmit="
+                                                return confirm(
+                                                    'Tem certeza que deseja desfazer este pagamento?'
+                                                );
+                                            "
+                                        >
+
+                                            <button
+                                                type="submit"
+                                                class="btn btn-sm btn-outline-secondary"
+                                            >
+                                                Desfazer pagamento
+                                            </button>
+
+                                        </form>
+
+                                    {% elif parcela.status != "CANCELADO" %}
+
+                                        <button
+                                            type="button"
+                                            class="btn btn-sm btn-success"
+                                            data-bs-toggle="modal"
+                                            data-bs-target="#modalPagamento{{ parcela.id }}"
+                                        >
+                                            Registrar pagamento
+                                        </button>
+
+                                    {% endif %}
+
+                                </td>
+
+                            </tr>
+
+                        {% endfor %}
+
+                    </tbody>
+
+                </table>
+
+            </div>
+
+        {% else %}
+
+            <div class="text-center border rounded-3 bg-light py-5 px-3">
+
+                <div
+                    class="mb-3"
+                    style="font-size: 2.5rem;"
+                >
+                    💰
+                </div>
+
+                <h6 class="fw-semibold mb-2">
+                    Nenhuma parcela gerada
+                </h6>
+
+                <p class="text-muted mb-0">
+                    Este contrato ainda não possui parcelas cadastradas.
+                </p>
+
+            </div>
+
+        {% endif %}
+
+    </div>
+
+</div>
+
+
+{% for parcela in honorario.parcelas %}
+
+    {% if parcela.status != "PAGO"
+        and parcela.status != "CANCELADO" %}
+
+        <div
+            class="modal fade"
+            id="modalPagamento{{ parcela.id }}"
+            tabindex="-1"
+            aria-hidden="true"
+        >
+
+            <div class="modal-dialog modal-dialog-centered">
+
+                <div class="modal-content border-0 shadow">
+
+                    <form
+                        method="POST"
+                        action="{{ url_for(
+                            'honorarios.pagar_parcela',
+                            parcela_id=parcela.id
+                        ) }}"
+                    >
+
+                        <div class="modal-header">
+
+                            <h5 class="modal-title">
+                                Registrar pagamento
+                            </h5>
+
+                            <button
+                                type="button"
+                                class="btn-close"
+                                data-bs-dismiss="modal"
+                                aria-label="Fechar"
+                            ></button>
+
+                        </div>
+
+
+                        <div class="modal-body">
+
+                            <div class="alert alert-light border">
+
+                                <div class="d-flex justify-content-between">
+
+                                    <span>
+                                        Parcela
+                                    </span>
+
+                                    <strong>
+                                        {{ parcela.numero }}
+                                        /
+                                        {{ honorario.quantidade_parcelas }}
+                                    </strong>
+
+                                </div>
+
+                                <div class="d-flex justify-content-between mt-2">
+
+                                    <span>
+                                        Valor
+                                    </span>
+
+                                    <strong>
+                                        {{ parcela.valor_formatado }}
+                                    </strong>
+
+                                </div>
+
+                            </div>
+
+
+                            <div class="mb-3">
+
+                                <label class="form-label">
+                                    Data do pagamento
+                                </label>
+
+                                <input
+                                    type="date"
+                                    class="form-control"
+                                    name="data_pagamento"
+                                >
+
+                                <div class="form-text">
+                                    Quando não informada, será utilizada a data de hoje.
+                                </div>
+
+                            </div>
+
+
+                            <div class="mb-3">
+
+                                <label class="form-label">
+                                    Forma de pagamento
+                                </label>
+
+                                <select
+                                    class="form-select"
+                                    name="forma_pagamento"
+                                >
+
+                                    <option value="">
+                                        Usar forma do contrato
+                                    </option>
+
+                                    <option value="PIX">
+                                        PIX
+                                    </option>
+
+                                    <option value="Boleto">
+                                        Boleto
+                                    </option>
+
+                                    <option value="Dinheiro">
+                                        Dinheiro
+                                    </option>
+
+                                    <option value="Cartão de Crédito">
+                                        Cartão de Crédito
+                                    </option>
+
+                                    <option value="Cartão de Débito">
+                                        Cartão de Débito
+                                    </option>
+
+                                    <option value="Transferência Bancária">
+                                        Transferência Bancária
+                                    </option>
+
+                                </select>
+
+                            </div>
+
+
+                            <div>
+
+                                <label class="form-label">
+                                    Observações
+                                </label>
+
+                                <textarea
+                                    class="form-control"
+                                    rows="3"
+                                    name="observacoes"
+                                    placeholder="Ex.: pagamento confirmado pelo banco."
+                                ></textarea>
+
+                            </div>
+
+                        </div>
+
+
+                        <div class="modal-footer">
+
+                            <button
+                                type="button"
+                                class="btn btn-outline-secondary"
+                                data-bs-dismiss="modal"
+                            >
+                                Cancelar
+                            </button>
+
+                            <button
+                                type="submit"
+                                class="btn btn-success"
+                            >
+                                Confirmar pagamento
+                            </button>
+
+                        </div>
+
+                    </form>
+
+                </div>
+
+            </div>
+
+        </div>
+
+    {% endif %}
+
+{% endfor %}
+
+{% endblock %}

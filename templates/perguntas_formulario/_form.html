@@ -1,0 +1,426 @@
+<div class="card border-0 shadow-sm">
+    <div class="card-body p-4">
+
+        <div class="row g-4">
+
+            <div class="col-12">
+                <div class="d-flex align-items-center gap-2 mb-1">
+                    <span class="fs-5">🧩</span>
+
+                    <h5 class="mb-0">
+                        Dados da pergunta
+                    </h5>
+                </div>
+
+                <p class="text-muted small mb-0">
+                    Configure o conteúdo, a etapa, o tipo de resposta e o comportamento
+                    desta pergunta.
+                </p>
+            </div>
+
+            <div class="col-lg-8">
+                <label for="texto" class="form-label fw-semibold">
+                    Texto da pergunta
+                    <span class="text-danger">*</span>
+                </label>
+
+                <input
+                    type="text"
+                    class="form-control"
+                    id="texto"
+                    name="texto"
+                    maxlength="500"
+                    required
+                    autofocus
+                    value="{{ pergunta.texto or '' }}"
+                    placeholder="Ex.: Qual foi a data de admissão?"
+                >
+            </div>
+
+            <div class="col-lg-4">
+                <label for="ordem" class="form-label fw-semibold">
+                    Ordem da pergunta
+                </label>
+
+                <input
+                    type="number"
+                    class="form-control"
+                    id="ordem"
+                    name="ordem"
+                    min="0"
+                    step="1"
+                    value="{{ pergunta.ordem or 0 }}"
+                >
+
+                <div class="form-text">
+                    Define a posição da pergunta dentro da etapa.
+                </div>
+            </div>
+
+            <div class="col-12">
+                <div class="border rounded-3 bg-light p-4">
+
+                    <div class="d-flex align-items-start gap-3 mb-4">
+                        <div
+                            class="d-flex align-items-center justify-content-center bg-white border rounded-3 flex-shrink-0"
+                            style="width: 46px; height: 46px; font-size: 1.3rem;"
+                        >
+                            🗂️
+                        </div>
+
+                        <div>
+                            <h6 class="fw-semibold mb-1">
+                                Organização por etapa
+                            </h6>
+
+                            <p class="text-muted small mb-0">
+                                Perguntas com o mesmo nome e ordem de etapa ficarão juntas
+                                no assistente de preenchimento.
+                            </p>
+                        </div>
+                    </div>
+
+                    <div class="row g-3">
+
+                        <div class="col-lg-6">
+                            <label for="etapa" class="form-label fw-semibold">
+                                Nome da etapa
+                                <span class="text-danger">*</span>
+                            </label>
+
+                            <input
+                                type="text"
+                                class="form-control"
+                                id="etapa"
+                                name="etapa"
+                                maxlength="100"
+                                required
+                                value="{{ pergunta.etapa or 'Geral' }}"
+                                placeholder="Ex.: Dados pessoais"
+                            >
+                        </div>
+
+                        <div class="col-lg-3">
+                            <label for="ordem_etapa" class="form-label fw-semibold">
+                                Ordem da etapa
+                            </label>
+
+                            <input
+                                type="number"
+                                class="form-control"
+                                id="ordem_etapa"
+                                name="ordem_etapa"
+                                min="1"
+                                step="1"
+                                value="{{ pergunta.ordem_etapa or 1 }}"
+                            >
+                        </div>
+
+                        <div class="col-lg-3">
+                            <label for="icone" class="form-label fw-semibold">
+                                Ícone
+                            </label>
+
+                            <input
+                                type="text"
+                                class="form-control"
+                                id="icone"
+                                name="icone"
+                                maxlength="30"
+                                value="{{ pergunta.icone or '📄' }}"
+                                placeholder="Ex.: 👤"
+                            >
+                        </div>
+
+                        <div class="col-md-6">
+                            <label for="grupo" class="form-label fw-semibold">
+                                Grupo interno
+                            </label>
+
+                            <input
+                                type="text"
+                                class="form-control"
+                                id="grupo"
+                                name="grupo"
+                                maxlength="100"
+                                value="{{ pergunta.grupo or '' }}"
+                                placeholder="Ex.: Identificação"
+                            >
+
+                            <div class="form-text">
+                                Opcional. Ajuda a separar assuntos dentro da mesma etapa.
+                            </div>
+                        </div>
+
+                        <div class="col-md-6">
+                            <label for="descricao_etapa" class="form-label fw-semibold">
+                                Descrição da etapa
+                            </label>
+
+                            <textarea
+                                class="form-control"
+                                id="descricao_etapa"
+                                name="descricao_etapa"
+                                rows="3"
+                                maxlength="255"
+                                placeholder="Ex.: Informe os dados pessoais e de contato do cliente."
+                            >{{ pergunta.descricao_etapa or '' }}</textarea>
+                        </div>
+
+                    </div>
+                </div>
+            </div>
+
+            <div class="col-md-6">
+                <label for="codigo" class="form-label fw-semibold">
+                    Código interno
+                </label>
+
+                <input
+                    type="text"
+                    class="form-control"
+                    id="codigo"
+                    name="codigo"
+                    maxlength="100"
+                    value="{{ pergunta.codigo or '' }}"
+                    placeholder="Ex.: data_admissao"
+                >
+
+                <div class="form-text">
+                    Se ficar vazio, será gerado automaticamente a partir
+                    do texto da pergunta.
+                </div>
+            </div>
+
+            <div class="col-md-6">
+                <label for="tipo" class="form-label fw-semibold">
+                    Tipo de resposta
+                    <span class="text-danger">*</span>
+                </label>
+
+                <select
+                    class="form-select"
+                    id="tipo"
+                    name="tipo"
+                    required
+                >
+                    {% for codigo_tipo, nome_tipo in tipos.items() %}
+                        <option
+                            value="{{ codigo_tipo }}"
+                            {% if pergunta.tipo == codigo_tipo %}selected{% endif %}
+                        >
+                            {{ nome_tipo }}
+                        </option>
+                    {% endfor %}
+                </select>
+            </div>
+
+            <div class="col-12">
+                <label for="descricao" class="form-label fw-semibold">
+                    Texto de ajuda da pergunta
+                </label>
+
+                <textarea
+                    class="form-control"
+                    id="descricao"
+                    name="descricao"
+                    rows="3"
+                    placeholder="Inclua uma orientação que será exibida abaixo da pergunta."
+                >{{ pergunta.descricao or '' }}</textarea>
+            </div>
+
+            <div class="col-md-6">
+                <label for="placeholder" class="form-label fw-semibold">
+                    Exemplo dentro do campo
+                </label>
+
+                <input
+                    type="text"
+                    class="form-control"
+                    id="placeholder"
+                    name="placeholder"
+                    maxlength="255"
+                    value="{{ pergunta.placeholder or '' }}"
+                    placeholder="Ex.: 10/05/2025"
+                >
+            </div>
+
+            <div class="col-md-6">
+                <label for="valor_padrao" class="form-label fw-semibold">
+                    Valor padrão
+                </label>
+
+                <input
+                    type="text"
+                    class="form-control"
+                    id="valor_padrao"
+                    name="valor_padrao"
+                    value="{{ pergunta.valor_padrao or '' }}"
+                    placeholder="Valor preenchido inicialmente"
+                >
+            </div>
+
+            <div class="col-12" id="bloco-opcoes">
+                <label for="opcoes" class="form-label fw-semibold">
+                    Opções de resposta
+                </label>
+
+                <textarea
+                    class="form-control"
+                    id="opcoes"
+                    name="opcoes"
+                    rows="6"
+                    placeholder="Digite uma opção por linha.&#10;Ex.:&#10;Sim&#10;Não&#10;Não sei informar"
+                >{{ opcoes_texto or '' }}</textarea>
+
+                <div class="form-text">
+                    Esse campo é obrigatório para seleção única e múltipla seleção.
+                    Digite uma opção por linha.
+                </div>
+            </div>
+
+            <div class="col-md-6">
+                <div class="form-check form-switch">
+                    <input
+                        class="form-check-input"
+                        type="checkbox"
+                        role="switch"
+                        id="obrigatoria"
+                        name="obrigatoria"
+                        {% if pergunta.obrigatoria %}checked{% endif %}
+                    >
+
+                    <label class="form-check-label fw-semibold" for="obrigatoria">
+                        Resposta obrigatória
+                    </label>
+
+                    <div class="form-text">
+                        O formulário não poderá avançar sem essa resposta.
+                    </div>
+                </div>
+            </div>
+
+            <div class="col-md-6">
+                <div class="form-check form-switch">
+                    <input
+                        class="form-check-input"
+                        type="checkbox"
+                        role="switch"
+                        id="ativo"
+                        name="ativo"
+                        {% if pergunta.ativo %}checked{% endif %}
+                    >
+
+                    <label class="form-check-label fw-semibold" for="ativo">
+                        Pergunta ativa
+                    </label>
+
+                    <div class="form-text">
+                        Perguntas inativas não serão exibidas em novos preenchimentos.
+                    </div>
+                </div>
+            </div>
+
+            <div class="col-12">
+                <hr class="my-1">
+            </div>
+
+            <div class="col-12">
+                <div class="alert alert-light border mb-0">
+                    <div class="d-flex gap-3">
+                        <div class="fs-4">💡</div>
+
+                        <div>
+                            <h6 class="mb-1">
+                                Identificação da resposta
+                            </h6>
+
+                            <p class="mb-2 text-muted small">
+                                O código será utilizado nas regras e na geração automática
+                                de documentos. A etapa será utilizada no assistente.
+                            </p>
+
+                            <div class="d-flex flex-wrap gap-2">
+                                <code>
+                                    formulario.{{ pergunta.codigo or 'data_admissao' }}
+                                </code>
+
+                                <span class="badge text-bg-light border">
+                                    {{ pergunta.icone or '📄' }}
+                                    {{ pergunta.etapa or 'Geral' }}
+                                </span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="col-12">
+                <div
+                    class="
+                        d-flex
+                        flex-column
+                        flex-sm-row
+                        justify-content-end
+                        gap-2
+                        pt-2
+                    "
+                >
+                    <a
+                        href="{{ url_for(
+                            'perguntas_formulario.listar',
+                            formulario_id=formulario.id
+                        ) }}"
+                        class="btn btn-outline-secondary"
+                    >
+                        Cancelar
+                    </a>
+
+                    <button
+                        type="submit"
+                        class="btn btn-primary px-4"
+                    >
+                        💾 {{ texto_botao }}
+                    </button>
+                </div>
+            </div>
+
+        </div>
+
+    </div>
+</div>
+
+<script>
+    document.addEventListener(
+        "DOMContentLoaded",
+        function () {
+            const campoTipo = document.getElementById("tipo");
+            const blocoOpcoes = document.getElementById("bloco-opcoes");
+            const campoOpcoes = document.getElementById("opcoes");
+
+            function atualizarVisibilidadeOpcoes() {
+                const tiposComOpcoes = [
+                    "SELECAO",
+                    "MULTIPLA_SELECAO"
+                ];
+
+                const exibir = tiposComOpcoes.includes(
+                    campoTipo.value
+                );
+
+                blocoOpcoes.style.display = exibir
+                    ? ""
+                    : "none";
+
+                campoOpcoes.required = exibir;
+            }
+
+            campoTipo.addEventListener(
+                "change",
+                atualizarVisibilidadeOpcoes
+            );
+
+            atualizarVisibilidadeOpcoes();
+        }
+    );
+</script>
