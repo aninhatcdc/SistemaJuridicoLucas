@@ -28,4 +28,16 @@ def obter_database_url():
 
 
 class Config:
+
+    SECRET_KEY = os.getenv(
+        "SECRET_KEY",
+        "troque-esta-chave-antes-de-publicar",
+    )
+
     SQLALCHEMY_DATABASE_URI = obter_database_url()
+
+    SQLALCHEMY_TRACK_MODIFICATIONS = False
+
+    UPLOAD_FOLDER = BASE_DIR / "uploads"
+
+    MAX_CONTENT_LENGTH = 25 * 1024 * 1024
