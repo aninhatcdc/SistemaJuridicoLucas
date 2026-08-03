@@ -1,3 +1,4 @@
+import os
 from pathlib import Path
 
 from flask import Flask
@@ -13,10 +14,7 @@ from models.status_caso import StatusCaso
 from models.caso import Caso
 from models.documento_caso import DocumentoCaso
 from models.processo import Processo
-from models.honorario import (
-    HonorarioCaso,
-    ParcelaHonorario,
-)
+from models.honorario import HonorarioCaso, ParcelaHonorario
 from models.atendimento_caso import AtendimentoCaso
 from models.evento_agenda import EventoAgenda
 from models.modelo_documento import ModeloDocumento
@@ -25,7 +23,6 @@ from models.formulario_modelo import FormularioModelo
 from models.pergunta_formulario import PerguntaFormulario
 from models.formulario_caso import FormularioCaso
 from models.resposta_formulario import RespostaFormulario
-
 
 from routes.auth import auth_bp, login_manager
 from routes.dashboard import dashboard_bp
@@ -55,33 +52,14 @@ def create_app():
     app = Flask(__name__)
     app.config.from_object(Config)
 
-    Path(app.instance_path).mkdir(
-        parents=True,
-        exist_ok=True,
-    )
+    Path(app.instance_path).mkdir(parents=True, exist_ok=True)
+    Path(app.config["UPLOAD_FOLDER"]).mkdir(parents=True, exist_ok=True)
 
-    Path(app.config["UPLOAD_FOLDER"]).mkdir(
-        parents=True,
-        exist_ok=True,
-    )
-
-    pasta_modelos = (
-        Path(app.config["UPLOAD_FOLDER"])
-        / "modelos_documentos"
-    )
-
-    pasta_modelos.mkdir(
-        parents=True,
-        exist_ok=True,
-    )
+    pasta_modelos = Path(app.config["UPLOAD_FOLDER"]) / "modelos_documentos"
+    pasta_modelos.mkdir(parents=True, exist_ok=True)
 
     db.init_app(app)
-
-    migrate.init_app(
-        app,
-        db,
-    )
-
+    migrate.init_app(app, db)
     login_manager.init_app(app)
 
     app.register_blueprint(auth_bp)
@@ -98,44 +76,79 @@ def create_app():
     app.register_blueprint(modelos_bp)
     app.register_blueprint(gerador_documentos_bp)
     app.register_blueprint(regras_modelo_bp)
-    app.register_blueprint(
-        formularios_bp
-    )
-    app.register_blueprint(
-        perguntas_formulario_bp
-    )
-    app.register_blueprint(
-        formularios_caso_bp
-    )
+    app.register_blueprint(formularios_bp)
+    app.register_blueprint(perguntas_formulario_bp)
+    app.register_blueprint(formularios_caso_bp)
 
     with app.app_context():
         db.create_all()
-        criar_usuario_inicial()
+        criar_usuarios_iniciais()
         criar_dados_iniciais()
 
     return app
 
 
-def criar_usuario_inicial():
-    usuario_existente = Usuario.query.filter_by(
-        email="admin@local",
+def criar_ou_atualizar_usuario(
+    nome,
+    email,
+    telefone,
+    cargo,
+    perfil,
+    senha,
+):
+    email = email.strip().lower()
+
+    usuario = Usuario.query.filter_by(
+        email=email,
     ).first()
 
-    if usuario_existente:
-        return
+    if not usuario:
+        usuario = Usuario(
+            email=email,
+        )
+        db.session.add(usuario)
 
-    usuario = Usuario(
-        nome="Administrador",
-        email="admin@local",
+    usuario.nome = nome.strip()
+    usuario.telefone = telefone.strip()
+    usuario.cargo = cargo.strip()
+    usuario.perfil = perfil
+    usuario.ativo = True
+
+    if senha:
+        usuario.definir_senha(
+            senha,
+        )
+
+
+def criar_usuarios_iniciais():
+    criar_ou_atualizar_usuario(
+        nome="Lucas José Tavares Carneiro da Cunha",
+        email="lucastavaresadvocacia@gmail.com",
+        telefone="83999452488",
+        cargo="Advogado",
         perfil=Usuario.PERFIL_ADMIN,
-        ativo=True,
+        senha=os.getenv("LUCAS_INITIAL_PASSWORD", "").strip(),
     )
 
-    usuario.definir_senha(
-        "Admin@123",
+    criar_ou_atualizar_usuario(
+        nome="Ronaldy Regis Galberto da Silva",
+        email="ronaldyjuridico@gmail.com",
+        telefone="83986349978",
+        cargo="Estagiário",
+        perfil=Usuario.PERFIL_ADMIN,
+        senha=os.getenv("RONALDY_INITIAL_PASSWORD", "").strip(),
     )
 
-    db.session.add(usuario)
+    if os.getenv("RENDER") != "true":
+        criar_ou_atualizar_usuario(
+            nome="Administrador",
+            email="admin@local",
+            telefone="",
+            cargo="Administrador",
+            perfil=Usuario.PERFIL_ADMIN,
+            senha="Admin@123",
+        )
+
     db.session.commit()
 
 
