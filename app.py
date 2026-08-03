@@ -109,6 +109,7 @@ def create_app():
     )
 
     with app.app_context():
+        db.create_all()
         criar_usuario_inicial()
         criar_dados_iniciais()
 
