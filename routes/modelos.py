@@ -1,3 +1,4 @@
+import mimetypes
 import uuid
 from pathlib import Path
 
@@ -25,6 +26,14 @@ from services.scanner_variaveis import (
     ErroLeituraDocumento,
     escanear_variaveis_docx,
 )
+from services.storage import ErroStorage
+from services.storage_service import (
+    baixar_temporariamente,
+    existe,
+    remover,
+    salvar,
+    url_temporaria,
+)
 
 
 modelos_bp = Blueprint(
@@ -47,35 +56,15 @@ def arquivo_permitido(nome_arquivo):
     )
 
 
-def obter_pasta_modelos():
-    pasta_uploads = Path(
-        current_app.config["UPLOAD_FOLDER"]
-    )
-
-    pasta = (
-        pasta_uploads
-        / "modelos_documentos"
-    )
-
-    pasta.mkdir(
-        parents=True,
-        exist_ok=True,
-    )
-
-    return pasta
-
-
 def obter_caminho_modelo(modelo):
-    caminho = Path(
-        modelo.caminho_arquivo
-    )
+    """
+    Baixa o modelo para um arquivo temporário.
 
-    if caminho.is_absolute():
-        return caminho
-
-    return (
-        Path(current_app.root_path)
-        / caminho
+    O chamador deve remover o arquivo temporário quando terminar.
+    """
+    return baixar_temporariamente(
+        modelo.caminho_arquivo,
+        sufixo=".docx",
     )
 
 
@@ -85,44 +74,49 @@ def salvar_arquivo_modelo(arquivo):
     )
 
     extensao = (
-        nome_original.rsplit(".", 1)[1].lower()
+        nome_original.rsplit(
+            ".",
+            1,
+        )[1].lower()
     )
 
     nome_salvo = (
         f"{uuid.uuid4()}.{extensao}"
     )
 
-    pasta = obter_pasta_modelos()
-
-    caminho_absoluto = (
-        pasta
-        / nome_salvo
+    chave = (
+        "modelos_documentos/"
+        f"{nome_salvo}"
     )
 
-    arquivo.save(
-        caminho_absoluto
+    content_type = (
+        arquivo.mimetype
+        or mimetypes.guess_type(
+            nome_original
+        )[0]
+        or (
+            "application/vnd.openxmlformats-"
+            "officedocument.wordprocessingml.document"
+        )
     )
 
-    try:
-        caminho_relativo = (
-            caminho_absoluto.relative_to(
-                current_app.root_path
-            )
-        )
+    caminho_banco = salvar(
+        arquivo.stream,
+        chave,
+        content_type=content_type,
+    )
 
-        caminho_banco = str(
-            caminho_relativo
+    caminho_temporario = (
+        baixar_temporariamente(
+            caminho_banco,
+            sufixo=".docx",
         )
-
-    except ValueError:
-        caminho_banco = str(
-            caminho_absoluto
-        )
+    )
 
     return {
         "nome_original": nome_original,
         "nome_salvo": nome_salvo,
-        "caminho_absoluto": caminho_absoluto,
+        "caminho_absoluto": caminho_temporario,
         "caminho_banco": caminho_banco,
     }
 
@@ -132,14 +126,29 @@ def remover_arquivo(caminho):
         return
 
     try:
-        caminho = Path(caminho)
+        remover(
+            str(caminho)
+        )
 
-        if caminho.exists() and caminho.is_file():
-            caminho.unlink()
+    except ErroStorage:
+        current_app.logger.exception(
+            "Não foi possível remover o arquivo: %s",
+            caminho,
+        )
+
+
+def remover_temporario(caminho):
+    if not caminho:
+        return
+
+    try:
+        Path(caminho).unlink(
+            missing_ok=True
+        )
 
     except OSError:
         current_app.logger.exception(
-            "Não foi possível remover o arquivo: %s",
+            "Não foi possível remover o arquivo temporário: %s",
             caminho,
         )
 
@@ -359,6 +368,12 @@ def novo():
 
             db.session.commit()
 
+            remover_temporario(
+                dados_arquivo[
+                    "caminho_absoluto"
+                ]
+            )
+
             quantidade = len(
                 variaveis
             )
@@ -394,6 +409,12 @@ def novo():
             if dados_arquivo:
                 remover_arquivo(
                     dados_arquivo[
+                        "caminho_banco"
+                    ]
+                )
+
+                remover_temporario(
+                    dados_arquivo[
                         "caminho_absoluto"
                     ]
                 )
@@ -409,6 +430,12 @@ def novo():
             if dados_arquivo:
                 remover_arquivo(
                     dados_arquivo[
+                        "caminho_banco"
+                    ]
+                )
+
+                remover_temporario(
+                    dados_arquivo[
                         "caminho_absoluto"
                     ]
                 )
@@ -422,11 +449,17 @@ def novo():
                 "danger",
             )
 
-        except OSError:
+        except (OSError, ErroStorage):
             db.session.rollback()
 
             if dados_arquivo:
                 remover_arquivo(
+                    dados_arquivo[
+                        "caminho_banco"
+                    ]
+                )
+
+                remover_temporario(
                     dados_arquivo[
                         "caminho_absoluto"
                     ]
@@ -536,9 +569,7 @@ def editar(modelo_id):
             "arquivo"
         )
 
-        arquivo_antigo = obter_caminho_modelo(
-            modelo
-        )
+        arquivo_antigo = modelo.caminho_arquivo
 
         dados_novo_arquivo = None
 
@@ -592,11 +623,18 @@ def editar(modelo_id):
 
             db.session.commit()
 
+            if dados_novo_arquivo:
+                remover_temporario(
+                    dados_novo_arquivo[
+                        "caminho_absoluto"
+                    ]
+                )
+
             if (
                 dados_novo_arquivo
                 and arquivo_antigo
                 != dados_novo_arquivo[
-                    "caminho_absoluto"
+                    "caminho_banco"
                 ]
             ):
                 remover_arquivo(
@@ -621,6 +659,12 @@ def editar(modelo_id):
             if dados_novo_arquivo:
                 remover_arquivo(
                     dados_novo_arquivo[
+                        "caminho_banco"
+                    ]
+                )
+
+                remover_temporario(
+                    dados_novo_arquivo[
                         "caminho_absoluto"
                     ]
                 )
@@ -636,6 +680,12 @@ def editar(modelo_id):
             if dados_novo_arquivo:
                 remover_arquivo(
                     dados_novo_arquivo[
+                        "caminho_banco"
+                    ]
+                )
+
+                remover_temporario(
+                    dados_novo_arquivo[
                         "caminho_absoluto"
                     ]
                 )
@@ -649,11 +699,17 @@ def editar(modelo_id):
                 "danger",
             )
 
-        except OSError:
+        except (OSError, ErroStorage):
             db.session.rollback()
 
             if dados_novo_arquivo:
                 remover_arquivo(
+                    dados_novo_arquivo[
+                        "caminho_banco"
+                    ]
+                )
+
+                remover_temporario(
                     dados_novo_arquivo[
                         "caminho_absoluto"
                     ]
@@ -683,13 +739,57 @@ def download(modelo_id):
         modelo_id
     )
 
-    caminho = obter_caminho_modelo(
-        modelo
-    )
+    try:
+        if not existe(
+            modelo.caminho_arquivo
+        ):
+            flash(
+                "O arquivo deste modelo não foi encontrado.",
+                "danger",
+            )
 
-    if not caminho.exists():
+            return redirect(
+                url_for(
+                    "modelos.listar"
+                )
+            )
+
+        link = url_temporaria(
+            modelo.caminho_arquivo,
+            nome_download=modelo.nome_arquivo,
+            expira_em=300,
+        )
+
+        if link:
+            return redirect(
+                link
+            )
+
+        caminho = obter_caminho_modelo(
+            modelo
+        )
+
+        resposta = send_file(
+            caminho,
+            as_attachment=True,
+            download_name=modelo.nome_arquivo,
+        )
+
+        @resposta.call_on_close
+        def limpar_download():
+            remover_temporario(
+                caminho
+            )
+
+        return resposta
+
+    except ErroStorage:
+        current_app.logger.exception(
+            "Erro ao baixar modelo de documento."
+        )
+
         flash(
-            "O arquivo deste modelo não foi encontrado.",
+            "Não foi possível baixar o arquivo do modelo.",
             "danger",
         )
 
@@ -698,12 +798,6 @@ def download(modelo_id):
                 "modelos.listar"
             )
         )
-
-    return send_file(
-        caminho,
-        as_attachment=True,
-        download_name=modelo.nome_arquivo,
-    )
 
 
 @modelos_bp.route(
@@ -764,9 +858,7 @@ def excluir(modelo_id):
         modelo_id
     )
 
-    caminho = obter_caminho_modelo(
-        modelo
-    )
+    caminho = modelo.caminho_arquivo
 
     try:
         db.session.delete(
