@@ -713,3 +713,52 @@ def detalhes(caso_id):
         honorario=honorario,
         eventos=eventos,
     )
+
+
+@casos_bp.post(
+    "/<string:caso_id>/excluir"
+)
+@login_required
+def excluir(caso_id):
+    caso = db.get_or_404(
+        Caso,
+        caso_id,
+    )
+
+    cliente_id = caso.cliente_id
+    numero_interno = caso.numero_interno
+
+    try:
+        db.session.delete(
+            caso
+        )
+
+        db.session.commit()
+
+        flash(
+            f"Caso {numero_interno} excluído com sucesso.",
+            "success",
+        )
+
+        return redirect(
+            url_for(
+                "clientes.detalhes",
+                cliente_id=cliente_id,
+            )
+        )
+
+    except Exception:
+        db.session.rollback()
+
+        flash(
+            "Não foi possível excluir o caso. "
+            "Verifique se ainda existem registros vinculados.",
+            "danger",
+        )
+
+        return redirect(
+            url_for(
+                "casos.detalhes",
+                caso_id=caso.id,
+            )
+        )

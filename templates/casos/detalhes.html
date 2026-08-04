@@ -111,6 +111,27 @@
             Editar Caso
         </a>
 
+        <form
+            method="POST"
+            action="{{ url_for(
+                'casos.excluir',
+                caso_id=caso.id
+            ) }}"
+            class="d-inline"
+            onsubmit="
+                return confirm(
+                    'Tem certeza que deseja excluir este caso? Todos os dados vinculados a ele também poderão ser excluídos. Esta ação não pode ser desfeita.'
+                );
+            "
+        >
+            <button
+                type="submit"
+                class="btn btn-danger"
+            >
+                Excluir Caso
+            </button>
+        </form>
+
     </div>
 
 </div>
