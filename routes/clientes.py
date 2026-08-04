@@ -513,3 +513,63 @@ def alternar_status(cliente_id):
         request.referrer
         or url_for("clientes.listar")
     )
+
+
+@clientes_bp.post(
+    "/<string:cliente_id>/excluir"
+)
+@login_required
+def excluir(cliente_id):
+    cliente = db.get_or_404(
+        Cliente,
+        cliente_id,
+    )
+
+    if cliente.casos:
+        flash(
+            "Não é possível excluir um cliente que possui casos cadastrados. "
+            "Exclua primeiro os casos vinculados.",
+            "warning",
+        )
+
+        return redirect(
+            url_for(
+                "clientes.detalhes",
+                cliente_id=cliente.id,
+            )
+        )
+
+    nome_cliente = cliente.nome
+
+    try:
+        db.session.delete(
+            cliente
+        )
+
+        db.session.commit()
+
+        flash(
+            f"Cliente {nome_cliente} excluído com sucesso.",
+            "success",
+        )
+
+        return redirect(
+            url_for(
+                "clientes.listar"
+            )
+        )
+
+    except Exception:
+        db.session.rollback()
+
+        flash(
+            "Não foi possível excluir o cliente.",
+            "danger",
+        )
+
+        return redirect(
+            url_for(
+                "clientes.detalhes",
+                cliente_id=cliente.id,
+            )
+        )
