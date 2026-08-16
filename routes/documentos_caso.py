@@ -1,3 +1,4 @@
+import mimetypes
 import uuid
 from io import BytesIO
 from pathlib import Path
@@ -11,7 +12,6 @@ from flask import (
     redirect,
     request,
     send_file,
-    send_from_directory,
     url_for,
 )
 from flask_login import current_user, login_required
@@ -20,6 +20,15 @@ from werkzeug.utils import secure_filename
 from models import db
 from models.caso import Caso
 from models.documento_caso import DocumentoCaso
+
+from services.storage import ErroStorage
+from services.storage_service import (
+    baixar_temporariamente,
+    existe,
+    remover,
+    salvar,
+    url_temporaria,
+)
 from services.timeline_service import TimelineService
 
 
@@ -81,6 +90,10 @@ def obter_extensao(nome_arquivo):
 
 
 def obter_pasta_upload():
+    """
+    Mantido para compatibilidade com documentos antigos
+    que ainda possam existir localmente.
+    """
     pasta_upload = Path(
         current_app.config["UPLOAD_FOLDER"]
     )
@@ -92,12 +105,9 @@ def obter_pasta_upload():
 
     return pasta_upload
 
-
 def obter_pasta_caso(caso):
-    pasta_upload = obter_pasta_upload()
-
     pasta_caso = (
-        pasta_upload
+        obter_pasta_upload()
         / f"cliente_{caso.cliente_id}"
         / f"caso_{caso.id}"
     )
@@ -107,19 +117,45 @@ def obter_pasta_caso(caso):
         exist_ok=True,
     )
 
-    return pasta_caso
+    return pasta_caso    
 
 
 def obter_caminho_seguro(documento):
+    """
+    Obtém o caminho de documentos antigos armazenados
+    localmente.
+
+    Documentos novos utilizam R2 e não passam por esta
+    função.
+    """
     pasta_upload = obter_pasta_upload().resolve()
+
+    caminho_arquivo = (
+        documento.caminho_arquivo
+        or ""
+    )
+
+    if caminho_arquivo.startswith(
+        "r2://"
+    ):
+        return None
+
+    if caminho_arquivo.startswith(
+        "local://"
+    ):
+        caminho_arquivo = caminho_arquivo[
+            len("local://") :
+        ]
 
     caminho_completo = (
         pasta_upload
-        / documento.caminho_arquivo
+        / caminho_arquivo
     ).resolve()
 
     try:
-        caminho_completo.relative_to(pasta_upload)
+        caminho_completo.relative_to(
+            pasta_upload
+        )
 
     except ValueError:
         abort(403)
@@ -127,16 +163,71 @@ def obter_caminho_seguro(documento):
     return caminho_completo
 
 
-def documento_pertence_ao_kit_trabalhista(documento):
+def documento_esta_no_r2(documento):
+    return (
+        documento.caminho_arquivo
+        and str(
+            documento.caminho_arquivo
+        ).startswith(
+            "r2://"
+        )
+    )
+
+
+def documento_existe(documento):
+    """
+    Verifica se o documento existe tanto no R2 quanto
+    no armazenamento local antigo.
+    """
+    if not documento.caminho_arquivo:
+        return False
+
+    try:
+        if documento_esta_no_r2(
+            documento
+        ):
+            return existe(
+                documento.caminho_arquivo
+            )
+
+        caminho_completo = (
+            obter_caminho_seguro(
+                documento
+            )
+        )
+
+        return (
+            caminho_completo is not None
+            and caminho_completo.is_file()
+        )
+
+    except ErroStorage:
+        current_app.logger.exception(
+            "Erro ao verificar documento %s.",
+            documento.id,
+        )
+
+        return False
+
+
+def documento_pertence_ao_kit_trabalhista(
+    documento
+):
     observacoes = (
         documento.observacoes
         or ""
     ).lower()
 
-    return "kit trabalhista" in observacoes
+    return (
+        "kit trabalhista"
+        in observacoes
+    )
 
 
-def criar_nome_unico_zip(nome_original, nomes_utilizados):
+def criar_nome_unico_zip(
+    nome_original,
+    nomes_utilizados,
+):
     nome_seguro = secure_filename(
         nome_original
         or "documento"
@@ -146,17 +237,26 @@ def criar_nome_unico_zip(nome_original, nomes_utilizados):
         nome_seguro = "documento"
 
     caminho = Path(nome_seguro)
-    nome_base = caminho.stem or "documento"
+
+    nome_base = (
+        caminho.stem
+        or "documento"
+    )
+
     extensao = caminho.suffix
 
     candidato = nome_seguro
     contador = 2
 
-    while candidato.lower() in nomes_utilizados:
+    while (
+        candidato.lower()
+        in nomes_utilizados
+    ):
         candidato = (
             f"{nome_base}_{contador}"
             f"{extensao}"
         )
+
         contador += 1
 
     nomes_utilizados.add(
@@ -164,6 +264,49 @@ def criar_nome_unico_zip(nome_original, nomes_utilizados):
     )
 
     return candidato
+
+
+def obter_content_type(
+    arquivo,
+    nome_arquivo,
+):
+    return (
+        arquivo.mimetype
+        or mimetypes.guess_type(
+            nome_arquivo
+        )[0]
+        or "application/octet-stream"
+    )
+
+
+def obter_tamanho_arquivo(arquivo):
+    """
+    Obtém o tamanho do arquivo enviado sem precisar
+    salvá-lo localmente.
+    """
+    try:
+        stream = arquivo.stream
+
+        posicao_atual = stream.tell()
+
+        stream.seek(
+            0,
+            2,
+        )
+
+        tamanho = stream.tell()
+
+        stream.seek(
+            posicao_atual
+        )
+
+        return tamanho
+
+    except (
+        AttributeError,
+        OSError,
+    ):
+        return None
 
 
 @documentos_caso_bp.route(
@@ -177,7 +320,9 @@ def novo(caso_id):
         caso_id,
     )
 
-    arquivo = request.files.get("arquivo")
+    arquivo = request.files.get(
+        "arquivo"
+    )
 
     tipo_documento = (
         request.form.get(
@@ -261,31 +406,41 @@ def novo(caso_id):
         f"{uuid.uuid4().hex}.{extensao}"
     )
 
-    pasta_caso = obter_pasta_caso(caso)
-    caminho_completo = pasta_caso / nome_salvo
+    chave = (
+        f"documentos_caso/"
+        f"cliente_{caso.cliente_id}/"
+        f"caso_{caso.id}/"
+        f"{nome_salvo}"
+    )
+
+    caminho_storage = None
 
     try:
-        arquivo.save(caminho_completo)
-
         tamanho_bytes = (
-            caminho_completo.stat().st_size
+            obter_tamanho_arquivo(
+                arquivo
+            )
         )
 
-        pasta_upload = (
-            obter_pasta_upload().resolve()
+        content_type = (
+            obter_content_type(
+                arquivo,
+                nome_original_seguro,
+            )
         )
 
-        caminho_relativo = (
-            caminho_completo.resolve()
-            .relative_to(pasta_upload)
+        arquivo.stream.seek(0)
+
+        caminho_storage = salvar(
+            arquivo.stream,
+            chave,
+            content_type=content_type,
         )
 
         documento = DocumentoCaso(
             nome_original=arquivo.filename,
             nome_arquivo=nome_salvo,
-            caminho_arquivo=str(
-                caminho_relativo
-            ),
+            caminho_arquivo=caminho_storage,
             tipo_documento=tipo_documento,
             extensao=extensao,
             tamanho_bytes=tamanho_bytes,
@@ -294,7 +449,10 @@ def novo(caso_id):
             usuario_id=current_user.id,
         )
 
-        db.session.add(documento)
+        db.session.add(
+            documento
+        )
+
         db.session.flush()
 
         TimelineService.registrar_documento_enviado(
@@ -312,8 +470,17 @@ def novo(caso_id):
     except Exception:
         db.session.rollback()
 
-        if caminho_completo.exists():
-            caminho_completo.unlink()
+        if caminho_storage:
+            try:
+                remover(
+                    caminho_storage
+                )
+
+            except ErroStorage:
+                current_app.logger.exception(
+                    "Não foi possível remover o arquivo "
+                    "enviado após erro no banco."
+                )
 
         current_app.logger.exception(
             "Erro ao enviar documento para o caso %s.",
@@ -344,12 +511,17 @@ def visualizar(documento_id):
     )
 
     extensao = (
-        documento.extensao or ""
+        documento.extensao
+        or ""
     ).lower()
 
-    if extensao not in EXTENSOES_VISUALIZAVEIS:
+    if (
+        extensao
+        not in EXTENSOES_VISUALIZAVEIS
+    ):
         flash(
-            "Este tipo de arquivo não pode ser visualizado no navegador.",
+            "Este tipo de arquivo não pode ser "
+            "visualizado no navegador.",
             "warning",
         )
 
@@ -360,13 +532,82 @@ def visualizar(documento_id):
             )
         )
 
-    caminho_completo = obter_caminho_seguro(
-        documento
-    )
+    try:
+        if documento_esta_no_r2(
+            documento
+        ):
+            if not existe(
+                documento.caminho_arquivo
+            ):
+                flash(
+                    "O arquivo não foi encontrado "
+                    "no armazenamento.",
+                    "danger",
+                )
 
-    if not caminho_completo.is_file():
+                return redirect(
+                    url_for(
+                        "casos.detalhes",
+                        caso_id=documento.caso_id,
+                    )
+                )
+
+            link = url_temporaria(
+                documento.caminho_arquivo,
+                expira_em=300,
+            )
+
+            if link:
+                return redirect(
+                    link
+                )
+
+        caminho_completo = (
+            obter_caminho_seguro(
+                documento
+            )
+        )
+
+        if (
+            caminho_completo is None
+            or not caminho_completo.is_file()
+        ):
+            flash(
+                "O arquivo não foi encontrado no servidor.",
+                "danger",
+            )
+
+            return redirect(
+                url_for(
+                    "casos.detalhes",
+                    caso_id=documento.caso_id,
+                )
+            )
+
+        tipo_mime = TIPOS_MIME.get(
+            extensao,
+            "application/octet-stream",
+        )
+
+        return send_file(
+            caminho_completo,
+            mimetype=tipo_mime,
+            as_attachment=False,
+            download_name=(
+                documento.nome_original
+            ),
+            conditional=True,
+        )
+
+    except ErroStorage:
+        current_app.logger.exception(
+            "Erro ao visualizar documento %s.",
+            documento.id,
+        )
+
         flash(
-            "O arquivo não foi encontrado no servidor.",
+            "Não foi possível acessar o arquivo "
+            "no armazenamento.",
             "danger",
         )
 
@@ -376,19 +617,6 @@ def visualizar(documento_id):
                 caso_id=documento.caso_id,
             )
         )
-
-    tipo_mime = TIPOS_MIME.get(
-        extensao,
-        "application/octet-stream",
-    )
-
-    return send_file(
-        caminho_completo,
-        mimetype=tipo_mime,
-        as_attachment=False,
-        download_name=documento.nome_original,
-        conditional=True,
-    )
 
 
 @documentos_caso_bp.route(
@@ -401,13 +629,79 @@ def download(documento_id):
         documento_id,
     )
 
-    caminho_completo = obter_caminho_seguro(
-        documento
-    )
+    try:
+        if documento_esta_no_r2(
+            documento
+        ):
+            if not existe(
+                documento.caminho_arquivo
+            ):
+                flash(
+                    "O arquivo não foi encontrado "
+                    "no armazenamento.",
+                    "danger",
+                )
 
-    if not caminho_completo.is_file():
+                return redirect(
+                    url_for(
+                        "casos.detalhes",
+                        caso_id=documento.caso_id,
+                    )
+                )
+
+            link = url_temporaria(
+                documento.caminho_arquivo,
+                nome_download=(
+                    documento.nome_original
+                ),
+                expira_em=300,
+            )
+
+            if link:
+                return redirect(
+                    link
+                )
+
+        caminho_completo = (
+            obter_caminho_seguro(
+                documento
+            )
+        )
+
+        if (
+            caminho_completo is None
+            or not caminho_completo.is_file()
+        ):
+            flash(
+                "O arquivo não foi encontrado no servidor.",
+                "danger",
+            )
+
+            return redirect(
+                url_for(
+                    "casos.detalhes",
+                    caso_id=documento.caso_id,
+                )
+            )
+
+        return send_file(
+            caminho_completo,
+            as_attachment=True,
+            download_name=(
+                documento.nome_original
+            ),
+            conditional=True,
+        )
+
+    except ErroStorage:
+        current_app.logger.exception(
+            "Erro ao baixar documento %s.",
+            documento.id,
+        )
+
         flash(
-            "O arquivo não foi encontrado no servidor.",
+            "Não foi possível baixar o arquivo "
+            "do armazenamento.",
             "danger",
         )
 
@@ -417,15 +711,6 @@ def download(documento_id):
                 caso_id=documento.caso_id,
             )
         )
-
-    return send_from_directory(
-        directory=str(
-            caminho_completo.parent
-        ),
-        path=caminho_completo.name,
-        as_attachment=True,
-        download_name=documento.nome_original,
-    )
 
 
 @documentos_caso_bp.route(
@@ -440,7 +725,9 @@ def baixar_kit_trabalhista(caso_id):
 
     documentos = (
         DocumentoCaso.query
-        .filter_by(caso_id=caso.id)
+        .filter_by(
+            caso_id=caso.id
+        )
         .order_by(
             DocumentoCaso.criado_em.asc()
         )
@@ -457,7 +744,8 @@ def baixar_kit_trabalhista(caso_id):
 
     if not documentos_kit:
         flash(
-            "Este caso ainda não possui documentos gerados pelo Kit Trabalhista.",
+            "Este caso ainda não possui documentos "
+            "gerados pelo Kit Trabalhista.",
             "warning",
         )
 
@@ -470,42 +758,116 @@ def baixar_kit_trabalhista(caso_id):
         )
 
     memoria_zip = BytesIO()
+
     nomes_utilizados = set()
+
     quantidade_adicionada = 0
 
-    with ZipFile(
-        memoria_zip,
-        mode="w",
-        compression=ZIP_DEFLATED,
-    ) as arquivo_zip:
+    arquivos_temporarios = []
 
-        for documento in documentos_kit:
-            caminho_completo = obter_caminho_seguro(
-                documento
-            )
+    try:
+        with ZipFile(
+            memoria_zip,
+            mode="w",
+            compression=ZIP_DEFLATED,
+        ) as arquivo_zip:
 
-            if not caminho_completo.is_file():
-                current_app.logger.warning(
-                    "Documento do Kit Trabalhista não encontrado: %s",
-                    caminho_completo,
+            for documento in documentos_kit:
+
+                try:
+                    if documento_esta_no_r2(
+                        documento
+                    ):
+                        if not existe(
+                            documento.caminho_arquivo
+                        ):
+                            current_app.logger.warning(
+                                "Documento do Kit Trabalhista "
+                                "não encontrado no R2: %s",
+                                documento.caminho_arquivo,
+                            )
+
+                            continue
+
+                        sufixo = (
+                            f".{documento.extensao}"
+                            if documento.extensao
+                            else ""
+                        )
+
+                        caminho_completo = (
+                            baixar_temporariamente(
+                                documento.caminho_arquivo,
+                                sufixo=sufixo,
+                            )
+                        )
+
+                        arquivos_temporarios.append(
+                            caminho_completo
+                        )
+
+                    else:
+                        caminho_completo = (
+                            obter_caminho_seguro(
+                                documento
+                            )
+                        )
+
+                    if (
+                        caminho_completo is None
+                        or not caminho_completo.is_file()
+                    ):
+                        current_app.logger.warning(
+                            "Documento do Kit Trabalhista "
+                            "não encontrado: %s",
+                            documento.caminho_arquivo,
+                        )
+
+                        continue
+
+                    nome_no_zip = (
+                        criar_nome_unico_zip(
+                            documento.nome_original,
+                            nomes_utilizados,
+                        )
+                    )
+
+                    arquivo_zip.write(
+                        caminho_completo,
+                        arcname=nome_no_zip,
+                    )
+
+                    quantidade_adicionada += 1
+
+                except ErroStorage:
+                    current_app.logger.exception(
+                        "Erro ao baixar documento do "
+                        "Kit Trabalhista: %s",
+                        documento.id,
+                    )
+
+                    continue
+
+    finally:
+        for caminho in arquivos_temporarios:
+            try:
+                Path(
+                    caminho
+                ).unlink(
+                    missing_ok=True
                 )
-                continue
 
-            nome_no_zip = criar_nome_unico_zip(
-                documento.nome_original,
-                nomes_utilizados,
-            )
-
-            arquivo_zip.write(
-                caminho_completo,
-                arcname=nome_no_zip,
-            )
-
-            quantidade_adicionada += 1
+            except OSError:
+                current_app.logger.exception(
+                    "Não foi possível remover "
+                    "arquivo temporário: %s",
+                    caminho,
+                )
 
     if quantidade_adicionada == 0:
         flash(
-            "Os registros do kit foram encontrados, mas os arquivos físicos não estão disponíveis.",
+            "Os registros do kit foram encontrados, "
+            "mas os arquivos físicos não estão disponíveis.",
             "danger",
         )
 
@@ -561,8 +923,8 @@ def excluir(documento_id):
         documento.caso_id,
     )
 
-    caminho_completo = obter_caminho_seguro(
-        documento
+    caminho_arquivo = (
+        documento.caminho_arquivo
     )
 
     try:
@@ -571,11 +933,53 @@ def excluir(documento_id):
             documento=documento,
         )
 
-        db.session.delete(documento)
+        db.session.delete(
+            documento
+        )
+
         db.session.commit()
 
-        if caminho_completo.is_file():
-            caminho_completo.unlink()
+        try:
+            if caminho_arquivo:
+                if str(
+                    caminho_arquivo
+                ).startswith(
+                    "r2://"
+                ):
+                    remover(
+                        caminho_arquivo
+                    )
+
+                else:
+                    caminho_completo = (
+                        obter_caminho_seguro(
+                            type(
+                                "DocumentoTemporario",
+                                (),
+                                {
+                                    "caminho_arquivo":
+                                    caminho_arquivo
+                                },
+                            )()
+                        )
+                    )
+
+                    if (
+                        caminho_completo
+                        and caminho_completo.is_file()
+                    ):
+                        caminho_completo.unlink()
+
+        except (
+            ErroStorage,
+            OSError,
+        ):
+            current_app.logger.exception(
+                "O registro do documento foi excluído, "
+                "mas não foi possível remover o arquivo "
+                "físico: %s",
+                caminho_arquivo,
+            )
 
         flash(
             "Documento excluído com sucesso.",

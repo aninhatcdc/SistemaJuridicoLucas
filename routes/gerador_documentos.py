@@ -42,6 +42,10 @@ from services.resolvedor_variaveis import (
     montar_resumo_resolucao,
     validar_preenchimento_final,
 )
+from services.storage import ErroStorage
+from services.storage_service import (
+    baixar_temporariamente,
+)
 
 
 gerador_documentos_bp = Blueprint(
@@ -51,29 +55,37 @@ gerador_documentos_bp = Blueprint(
 )
 
 
-def obter_caminho_modelo(modelo: ModeloDocumento) -> Path:
-    """Localiza o arquivo físico do modelo dentro da área permitida."""
-    caminho_informado = Path(modelo.caminho_arquivo)
+def obter_caminho_modelo(
+    modelo: ModeloDocumento,
+) -> Path:
+    """
+    Obtém uma cópia temporária do modelo DOCX.
 
-    if caminho_informado.is_absolute():
-        return caminho_informado.resolve()
+    Funciona com arquivos armazenados localmente e com
+    referências do Cloudflare R2.
+    """
+    return baixar_temporariamente(
+        modelo.caminho_arquivo,
+        sufixo=".docx",
+    )
 
-    pasta_upload = obter_pasta_upload().resolve()
-    raiz_projeto = Path(current_app.root_path).resolve()
 
-    caminho_pela_raiz = (raiz_projeto / caminho_informado).resolve()
-    if caminho_pela_raiz.is_file():
-        return caminho_pela_raiz
+def remover_arquivo_temporario(
+    caminho,
+):
+    if not caminho:
+        return
 
-    caminho_pelo_upload = (pasta_upload / caminho_informado).resolve()
-    if caminho_pelo_upload.is_file():
-        return caminho_pelo_upload
+    try:
+        Path(caminho).unlink(
+            missing_ok=True
+        )
 
-    partes = caminho_informado.parts
-    if partes and partes[0].lower() == "uploads":
-        return (pasta_upload / Path(*partes[1:])).resolve()
-
-    return caminho_pelo_upload
+    except OSError:
+        current_app.logger.warning(
+            "Não foi possível remover o arquivo temporário %s.",
+            caminho,
+        )
 
 
 def modelo_exige_processo(modelo: ModeloDocumento) -> bool:
@@ -407,18 +419,42 @@ def gerar(caso_id):
             faltantes=faltantes,
         )
 
-    caminho_modelo = obter_caminho_modelo(modelo)
+    caminho_modelo = None
     pasta_upload = obter_pasta_upload().resolve()
 
     try:
-        caminho_modelo.relative_to(pasta_upload)
-    except ValueError:
-        flash("O caminho do modelo está fora da pasta permitida.", "danger")
-        return voltar_para_caso(caso.id)
+        caminho_modelo = obter_caminho_modelo(
+            modelo
+        )
+
+    except ErroStorage as erro:
+        current_app.logger.exception(
+            "Não foi possível obter o modelo %s do armazenamento.",
+            modelo.id,
+        )
+
+        flash(
+            str(erro),
+            "danger",
+        )
+
+        return voltar_para_caso(
+            caso.id
+        )
 
     if not caminho_modelo.is_file():
-        flash("O arquivo físico do modelo não foi encontrado.", "danger")
-        return voltar_para_caso(caso.id)
+        remover_arquivo_temporario(
+            caminho_modelo
+        )
+
+        flash(
+            "O arquivo físico do modelo não foi encontrado.",
+            "danger",
+        )
+
+        return voltar_para_caso(
+            caso.id
+        )
 
     pasta_caso = obter_pasta_caso(caso)
     nome_original = criar_nome_documento(modelo, caso)
@@ -602,20 +638,48 @@ def gerar(caso_id):
             "danger",
         )
 
-    except Exception:
+    except ErroStorage as erro:
         db.session.rollback()
+
         if caminho_saida.is_file():
             caminho_saida.unlink()
+
         if caminho_saida_pdf.is_file():
             caminho_saida_pdf.unlink()
+
+        current_app.logger.exception(
+            "Erro de armazenamento ao gerar documento do caso %s.",
+            caso.id,
+        )
+
+        flash(
+            str(erro),
+            "danger",
+        )
+
+    except Exception:
+        db.session.rollback()
+
+        if caminho_saida.is_file():
+            caminho_saida.unlink()
+
+        if caminho_saida_pdf.is_file():
+            caminho_saida_pdf.unlink()
+
         current_app.logger.exception(
             "Erro ao gerar documento do caso %s.",
             caso.id,
         )
+
         flash(
             "Não foi possível gerar o documento. "
             "Consulte o terminal para verificar o erro.",
             "danger",
+        )
+
+    finally:
+        remover_arquivo_temporario(
+            caminho_modelo
         )
 
     return voltar_para_caso(caso.id)
@@ -778,17 +842,17 @@ def gerar_item_kit(
     nome_area,
     slug_area,
 ):
-    caminho_modelo = obter_caminho_modelo(modelo)
+    caminho_modelo = obter_caminho_modelo(
+        modelo
+    )
+
     pasta_upload = obter_pasta_upload().resolve()
 
-    try:
-        caminho_modelo.relative_to(pasta_upload)
-    except ValueError as erro:
-        raise ValueError(
-            "O caminho do modelo está fora da pasta permitida."
-        ) from erro
-
     if not caminho_modelo.is_file():
+        remover_arquivo_temporario(
+            caminho_modelo
+        )
+
         raise FileNotFoundError(
             "O arquivo físico do modelo não foi encontrado."
         )
@@ -956,6 +1020,10 @@ def gerar_item_kit(
         db.session.add(evento)
         db.session.commit()
 
+        remover_arquivo_temporario(
+            caminho_modelo
+        )
+
         return {
             "modelo": modelo.nome,
             "docx": nome_original,
@@ -969,9 +1037,18 @@ def gerar_item_kit(
 
     except Exception:
         db.session.rollback()
-        remover_arquivo_se_existir(caminho_saida)
-        remover_arquivo_se_existir(caminho_saida_pdf)
+        remover_arquivo_se_existir(
+            caminho_saida
+        )
+        remover_arquivo_se_existir(
+            caminho_saida_pdf
+        )
         raise
+
+    finally:
+        remover_arquivo_temporario(
+            caminho_modelo
+        )
 
 
 @gerador_documentos_bp.route(
