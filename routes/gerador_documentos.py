@@ -45,6 +45,8 @@ from services.resolvedor_variaveis import (
 from services.storage import ErroStorage
 from services.storage_service import (
     baixar_temporariamente,
+    remover,
+    salvar,
 )
 
 
@@ -67,6 +69,28 @@ def obter_caminho_modelo(
     return baixar_temporariamente(
         modelo.caminho_arquivo,
         sufixo=".docx",
+    )
+
+
+def enviar_documento_gerado_para_storage(
+    *,
+    caminho,
+    caso,
+    nome_arquivo,
+    content_type,
+):
+    """Envia um documento temporário ao storage configurado."""
+    chave = (
+        f"documentos_caso/"
+        f"cliente_{caso.cliente_id}/"
+        f"caso_{caso.id}/"
+        f"{nome_arquivo}"
+    )
+
+    return salvar(
+        caminho,
+        chave,
+        content_type=content_type,
     )
 
 
@@ -420,8 +444,6 @@ def gerar(caso_id):
         )
 
     caminho_modelo = None
-    pasta_upload = obter_pasta_upload().resolve()
-
     try:
         caminho_modelo = obter_caminho_modelo(
             modelo
@@ -478,7 +500,16 @@ def gerar(caso_id):
                 "O documento não foi criado no servidor."
             )
 
-        caminho_relativo = caminho_saida.resolve().relative_to(pasta_upload)
+        caminho_storage = enviar_documento_gerado_para_storage(
+            caminho=caminho_saida,
+            caso=caso,
+            nome_arquivo=nome_arquivo,
+            content_type=(
+                "application/vnd.openxmlformats-officedocument."
+                "wordprocessingml.document"
+            ),
+        )
+
         observacoes = (
             "Documento gerado automaticamente a partir do modelo "
             f"“{modelo.nome}”, versão {modelo.versao}."
@@ -495,7 +526,7 @@ def gerar(caso_id):
         documento = DocumentoCaso(
             nome_original=nome_original,
             nome_arquivo=nome_arquivo,
-            caminho_arquivo=str(caminho_relativo),
+            caminho_arquivo=caminho_storage,
             tipo_documento=(
                 modelo.tipo_documento
                 or modelo.categoria
@@ -519,14 +550,17 @@ def gerar(caso_id):
                 caminho_pdf=caminho_saida_pdf,
             )
 
-            caminho_relativo_pdf = (
-                caminho_saida_pdf.resolve().relative_to(pasta_upload)
+            caminho_storage_pdf = enviar_documento_gerado_para_storage(
+                caminho=caminho_saida_pdf,
+                caso=caso,
+                nome_arquivo=nome_arquivo_pdf,
+                content_type="application/pdf",
             )
 
             documento_pdf = DocumentoCaso(
                 nome_original=nome_original_pdf,
                 nome_arquivo=nome_arquivo_pdf,
-                caminho_arquivo=str(caminho_relativo_pdf),
+                caminho_arquivo=caminho_storage_pdf,
                 tipo_documento=(
                     modelo.tipo_documento
                     or modelo.categoria
@@ -581,6 +615,9 @@ def gerar(caso_id):
         }
         db.session.add(evento)
         db.session.commit()
+
+        remover_arquivo_se_existir(caminho_saida)
+        remover_arquivo_se_existir(caminho_saida_pdf)
 
         quantidade_faltantes = resultado.get(
             "quantidade_nao_encontradas",
@@ -846,8 +883,6 @@ def gerar_item_kit(
         modelo
     )
 
-    pasta_upload = obter_pasta_upload().resolve()
-
     if not caminho_modelo.is_file():
         remover_arquivo_temporario(
             caminho_modelo
@@ -909,10 +944,14 @@ def gerar_item_kit(
                 "O documento não foi criado no servidor."
             )
 
-        caminho_relativo = (
-            caminho_saida
-            .resolve()
-            .relative_to(pasta_upload)
+        caminho_storage = enviar_documento_gerado_para_storage(
+            caminho=caminho_saida,
+            caso=caso,
+            nome_arquivo=nome_arquivo,
+            content_type=(
+                "application/vnd.openxmlformats-officedocument."
+                "wordprocessingml.document"
+            ),
         )
 
         observacoes = (
@@ -926,7 +965,7 @@ def gerar_item_kit(
             modelo=modelo,
             nome_original=nome_original,
             nome_arquivo=nome_arquivo,
-            caminho_arquivo=caminho_relativo,
+            caminho_arquivo=caminho_storage,
             extensao="docx",
             tamanho_bytes=caminho_saida.stat().st_size,
             observacoes=observacoes,
@@ -943,10 +982,11 @@ def gerar_item_kit(
                 caminho_pdf=caminho_saida_pdf,
             )
 
-            caminho_relativo_pdf = (
-                caminho_saida_pdf
-                .resolve()
-                .relative_to(pasta_upload)
+            caminho_storage_pdf = enviar_documento_gerado_para_storage(
+                caminho=caminho_saida_pdf,
+                caso=caso,
+                nome_arquivo=nome_arquivo_pdf,
+                content_type="application/pdf",
             )
 
             documento_pdf = criar_documento_caso_gerado(
@@ -954,7 +994,7 @@ def gerar_item_kit(
                 modelo=modelo,
                 nome_original=nome_original_pdf,
                 nome_arquivo=nome_arquivo_pdf,
-                caminho_arquivo=caminho_relativo_pdf,
+                caminho_arquivo=caminho_storage_pdf,
                 extensao="pdf",
                 tamanho_bytes=caminho_saida_pdf.stat().st_size,
                 observacoes=(
@@ -1019,6 +1059,9 @@ def gerar_item_kit(
 
         db.session.add(evento)
         db.session.commit()
+
+        remover_arquivo_se_existir(caminho_saida)
+        remover_arquivo_se_existir(caminho_saida_pdf)
 
         remover_arquivo_temporario(
             caminho_modelo
